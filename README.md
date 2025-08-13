@@ -26,7 +26,7 @@
 
 This is a sample application that serves as a base implementation for chat applications utilizing **Strands Agents**.
 
-🏗️ **Simple Architecture** - Clean, maintainable codebase with mserverless scalability
+🏗️ **Simple Architecture** - Clean, maintainable codebase with serverless scalability
 
 🎨 **Rich UI/UX** - Polished chat interface with intuitive user experience
 
