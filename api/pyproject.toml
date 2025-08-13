@@ -1,0 +1,45 @@
+[project]
+name = "api"
+version = "0.1.0"
+description = "API server of strands chat"
+requires-python = ">=3.13"
+dependencies = [
+  "strands-agents==1.4.0",
+  "strands-agents-tools==0.2.2",
+  "boto3==1.40.7",
+  "mcp==1.12.2",
+  "fastapi==0.116.1",
+  "uvicorn==0.35.0",
+  "pydantic==2.11.7",
+  "requests==2.32.4",
+  "awslabs.nova-canvas-mcp-server==1.0.3",
+  "awslabs.aws-documentation-mcp-server==1.1.2"
+]
+
+[dependency-groups]
+lint = [
+  "ruff>=0.8.0",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 500
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ruff.lint.isort]
+known-first-party = ["api"]

@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "dependencies": {
+    "@types/aws-lambda": "^8.10.150",
+    "aws-jwt-verify": "^5.1.0"
+  }
+}
