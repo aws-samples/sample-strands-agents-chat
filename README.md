@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🤖 Strands Agents Chat Base
+# 🤖 Strands Agents Chat
 
 *A full-stack AI chat application powered by Amazon Bedrock and Strands Agents*
 
