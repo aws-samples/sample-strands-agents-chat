@@ -7,6 +7,7 @@ from mcp import StdioServerParameters, stdio_client
 from strands import Agent
 from strands.models import BedrockModel
 from strands.tools.mcp import MCPClient
+from strands_tools import calculator, current_time, diagram
 
 from config import PARAMETER, WORKSPACE_DIR
 from database import get_messages_from_db
@@ -72,7 +73,17 @@ async def process_streaming_request(request: StreamingRequest, x_user_sub: str, 
                 }
 
             model = BedrockModel(**model_params)
-            tools = []
+
+            # Create session-aware upload tool
+            session_upload_tool = create_session_aware_upload_tool(session_workspace_dir)
+
+            # Default tools
+            tools = [
+                current_time,
+                calculator,
+                diagram,  # TODO
+                session_upload_tool,
+            ]
 
             if request.imageGeneration:
                 image_generation_mcp_client = MCPClient(
@@ -95,9 +106,7 @@ async def process_streaming_request(request: StreamingRequest, x_user_sub: str, 
                 image_generation_mcp_client.start()
                 image_generation_tools = image_generation_mcp_client.list_tools_sync()
 
-                # Create session-aware upload tool
-                session_upload_tool = create_session_aware_upload_tool(session_workspace_dir)
-                tools = tools + image_generation_tools + [session_upload_tool]
+                tools = tools + image_generation_tools
 
             if request.awsDocumentation:
                 aws_documentation_mcp_client = MCPClient(

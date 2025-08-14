@@ -9,6 +9,9 @@ import {
   FunctionUrlAuthType,
   InvokeMode,
   Code,
+  Architecture,
+  DockerImageFunction,
+  DockerImageCode,
 } from 'aws-cdk-lib/aws-lambda';
 import { PolicyStatement, Effect } from 'aws-cdk-lib/aws-iam';
 import {
@@ -155,21 +158,16 @@ export class StrandsChatStack extends cdk.Stack {
         ).unsafeUnwrap()
       : null;
 
-    const handler = new PythonFunction(this, 'AppHandler', {
-      entry: '../api',
-      index: 'main.py',
-      runtime: Runtime.PYTHON_3_13,
+    const handler = new DockerImageFunction(this, 'ApiHandler', {
+      code: DockerImageCode.fromImageAsset('../api'),
       memorySize: 1024,
       timeout: cdk.Duration.minutes(15),
-      snapStart: SnapStartConf.ON_PUBLISHED_VERSIONS,
-      ephemeralStorageSize: cdk.Size.mebibytes(512),
-      bundling: {
-        assetExcludes: ['.venv', '.ruff_cache'],
-      },
+      ephemeralStorageSize: cdk.Size.mebibytes(1024),
+      architecture: Architecture.X86_64,
       environment: {
         AWS_LWA_INVOKE_MODE: 'RESPONSE_STREAM',
         AWS_LWA_READINESS_CHECK_PATH: '/api/',
-        AWS_LAMBDA_EXEC_WRAPPER: '/opt/bootstrap',
+        // AWS_LAMBDA_EXEC_WRAPPER: '/opt/bootstrap',
         PORT: '8080',
         BUCKET: fileBucket.bucketName,
         TABLE: table.tableName,
@@ -178,22 +176,55 @@ export class StrandsChatStack extends cdk.Stack {
         PARAMETER: JSON.stringify(props.parameter),
         TAVILY_API_KEY: tavilyApiKey ?? '',
       },
-      layers: [
-        LayerVersion.fromLayerVersionArn(
-          this,
-          'LwaLayer',
-          // https://github.com/awslabs/aws-lambda-web-adapter?tab=readme-ov-file#lambda-functions-packaged-as-zip-package-for-aws-managed-runtimes
-          `arn:aws:lambda:${
-            cdk.Stack.of(this).region
-          }:753240598075:layer:LambdaAdapterLayerX86:25`
-        ),
-      ],
     });
 
-    (handler.node.defaultChild as cdk.CfnResource).addPropertyOverride(
-      'Handler',
-      'run.sh'
-    );
+    // const handler = new PythonFunction(this, 'AppHandler', {
+    //   entry: '../api',
+    //   index: 'main.py',
+    //   runtime: Runtime.PYTHON_3_13,
+    //   memorySize: 1024,
+    //   timeout: cdk.Duration.minutes(15),
+    //   snapStart: SnapStartConf.ON_PUBLISHED_VERSIONS,
+    //   ephemeralStorageSize: cdk.Size.mebibytes(512),
+    //   architecture: Architecture.X86_64,
+    //   bundling: {
+    //     assetExcludes: [
+    //       '.venv',
+    //       '.ruff_cache',
+    //       '__pycache__',
+    //       'routers/__pycache__',
+    //       'services/__pycache__',
+    //     ],
+    //   },
+    //   environment: {
+    //     AWS_LWA_INVOKE_MODE: 'RESPONSE_STREAM',
+    //     AWS_LWA_READINESS_CHECK_PATH: '/api/',
+    //     AWS_LAMBDA_EXEC_WRAPPER: '/opt/bootstrap',
+    //     PORT: '8080',
+    //     BUCKET: fileBucket.bucketName,
+    //     TABLE: table.tableName,
+    //     RESOURCE_INDEX_NAME: resourceIndexName,
+    //     DATA_TYPE_INDEX_NAME: dataTypeIndexName,
+    //     PARAMETER: JSON.stringify(props.parameter),
+    //     TAVILY_API_KEY: tavilyApiKey ?? '',
+    //   },
+    //   layers: [
+    //     LayerVersion.fromLayerVersionArn(
+    //       this,
+    //       'LwaLayer',
+    //       // https://github.com/awslabs/aws-lambda-web-adapter?tab=readme-ov-file#lambda-functions-packaged-as-zip-package-for-aws-managed-runtimes
+    //       `arn:aws:lambda:${
+    //         cdk.Stack.of(this).region
+    //       }:753240598075:layer:LambdaAdapterLayerX86:25`
+    //     ),
+    //   ],
+    // });
+    //
+
+    // (handler.node.defaultChild as cdk.CfnResource).addPropertyOverride(
+    //   'Handler',
+    //   'run.sh'
+    // );
 
     handler.role?.addToPrincipalPolicy(
       new PolicyStatement({

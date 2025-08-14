@@ -18,7 +18,7 @@ popd
 # API
 pushd api
 
-uv run ruff check .
+uv run ruff check --fix .
 uv run ruff format .
 
 popd

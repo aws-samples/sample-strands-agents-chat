@@ -1,5 +1,5 @@
 #!/bin/bash
 
-PATH=$PATH:$LAMBDA_TASK_ROOT/bin \
-    PYTHONPATH=$PYTHONPATH:/opt/python:$LAMBDA_RUNTIME_DIR \
-    exec python -m uvicorn --port=$PORT main:app
+cp -r /var/task/.venv /tmp/.venv
+UV_PROJECT_ENVIRONMENT=/tmp/.venv \
+    exec uv run main.py
