@@ -18,7 +18,8 @@ popd
 # API
 pushd api
 
-uv run ruff check .
+uv sync --group=lint
+uv run ruff check --fix .
 uv run ruff format .
 
 popd

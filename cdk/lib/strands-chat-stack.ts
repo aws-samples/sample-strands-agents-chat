@@ -9,6 +9,7 @@ import {
   FunctionUrlAuthType,
   InvokeMode,
   Code,
+  LambdaInsightsVersion,
 } from 'aws-cdk-lib/aws-lambda';
 import { PolicyStatement, Effect } from 'aws-cdk-lib/aws-iam';
 import {
@@ -164,7 +165,7 @@ export class StrandsChatStack extends cdk.Stack {
       snapStart: SnapStartConf.ON_PUBLISHED_VERSIONS,
       ephemeralStorageSize: cdk.Size.mebibytes(512),
       bundling: {
-        assetExcludes: ['.venv', '.ruff_cache'],
+        assetExcludes: ['.venv', '.ruff_cache', '**/__pycache__'],
       },
       environment: {
         AWS_LWA_INVOKE_MODE: 'RESPONSE_STREAM',
@@ -188,6 +189,7 @@ export class StrandsChatStack extends cdk.Stack {
           }:753240598075:layer:LambdaAdapterLayerX86:25`
         ),
       ],
+      insightsVersion: LambdaInsightsVersion.VERSION_1_0_333_0,
     });
 
     (handler.node.defaultChild as cdk.CfnResource).addPropertyOverride(
