@@ -2,7 +2,7 @@
 
 # 🤖 Strands Agents Chat
 
-*A full-stack AI chat application powered by Amazon Bedrock and Strands Agents*
+*A full-stack AI chat application powered by Amazon Bedrock, Strands Agents, and Bedrock AgentCore*
 
 [![AWS](https://img.shields.io/badge/AWS-FF9900?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
 [![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org/)
@@ -30,7 +30,7 @@ This is a sample application that serves as a base implementation for chat appli
 
 🎨 **Rich UI/UX** - Polished chat interface with intuitive user experience
 
-🔧 **Extensible with Strands Agents** - Ready for customization with MCP, A2A, Multi Agents, and more
+🔧 **Extensible with Strands Agents** - Ready for customization with MCP, A2A, Multi Agents, Bedrock AgentCore, and more
 
 📱 **Responsive Design** - Optimized for both desktop and mobile usage
 
@@ -53,6 +53,7 @@ This is a sample application that serves as a base implementation for chat appli
 | 🎨 **Image Generation** | AI-powered image creation | Nova Canvas MCP |
 | 📚 **AWS Documentation Search** | Search and access AWS documentation | AWS Documentation MCP |
 | 🔍 **Web Search** | Real-time web search capabilities | Tavily API |
+| 💻 **CodeInterpreter** | Execute and analyze code in real-time | Bedrock AgentCore |
 
 ---
 
