@@ -10,4 +10,5 @@ export interface Parameter {
   tavilyApiKeySecretArn: string | null;
   novaCanvasRegion: string;
   createTitleModel: Omit<Model, 'displayName'>;
+  agentCoreRegion: string;
 }

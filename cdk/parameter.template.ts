@@ -45,4 +45,7 @@ export const parameter: Parameter = {
     id: 'anthropic.claude-3-haiku-20240307-v1:0',
     region: 'ap-northeast-1',
   },
+
+  // AgentCore configuration
+  agentCoreRegion: 'us-east-1',
 };
