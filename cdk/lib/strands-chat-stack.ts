@@ -211,9 +211,7 @@ export class StrandsChatStack extends cdk.Stack {
     handler.role?.addToPrincipalPolicy(
       new PolicyStatement({
         effect: Effect.ALLOW,
-        actions: [
-          'bedrock-agentcore:*',
-        ],
+        actions: ['bedrock-agentcore:*'],
         resources: ['*'],
       })
     );

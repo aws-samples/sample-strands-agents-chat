@@ -9,13 +9,13 @@ from strands import Agent
 from strands.models import BedrockModel
 from strands.tools.mcp import MCPClient
 from strands_tools import calculator, current_time
+from strands_tools.code_interpreter import AgentCoreCodeInterpreter
 
 from config import PARAMETER, WORKSPACE_DIR
 from database import get_messages_from_db
 from models import MessageInTable, StreamingRequest
 from services.chat_service import build_message, build_messages
 from tools import create_session_aware_upload_tool, web_search
-from strands_tools.code_interpreter import AgentCoreCodeInterpreter
 from utils import (
     cleanup_session_workspace,
     create_session_workspace,
@@ -65,13 +65,13 @@ async def process_streaming_request(request: StreamingRequest, x_user_sub: str, 
                 "model_id": request.modelId,
                 "boto_session": session,
                 "boto_client_config": Config(
-                    retries = {
-                        'max_attempts': 10,
-                        'mode': 'standard',
+                    retries={
+                        "max_attempts": 10,
+                        "mode": "standard",
                     },
-                    connect_timeout = 10,
-                    read_timeout = 300,
-                )
+                    connect_timeout=10,
+                    read_timeout=300,
+                ),
             }
 
             if request.reasoning:
@@ -85,15 +85,11 @@ async def process_streaming_request(request: StreamingRequest, x_user_sub: str, 
             # Create session-aware upload tool
             session_upload_tool = create_session_aware_upload_tool(session_workspace_dir)
 
-            # TODO
-            agent_core_code_interpreter = AgentCoreCodeInterpreter(region=PARAMETER['agentCoreRegion'])
-
             model = BedrockModel(**model_params)
             tools = [
                 current_time,
                 calculator,
                 session_upload_tool,
-                agent_core_code_interpreter.code_interpreter,
             ]
 
             if request.imageGeneration:
@@ -139,6 +135,10 @@ async def process_streaming_request(request: StreamingRequest, x_user_sub: str, 
 
             if request.webSearch:
                 tools.append(web_search)
+
+            if request.codeInterpreter:
+                agent_core_code_interpreter = AgentCoreCodeInterpreter(region=PARAMETER["agentCoreRegion"])
+                tools.append(agent_core_code_interpreter.code_interpreter)
 
             agent = Agent(
                 system_prompt=session_system_prompt,

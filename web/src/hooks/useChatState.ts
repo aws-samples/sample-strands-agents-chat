@@ -14,6 +14,7 @@ export type ChatState = {
   imageGeneration: boolean;
   webSearch: boolean;
   awsDocumentation: boolean;
+  codeInterpreter: boolean;
   selectedModel: Model | null;
 };
 
@@ -24,6 +25,7 @@ const DEFAULT_CHAT_STATE: ChatState = {
   imageGeneration: false,
   webSearch: false,
   awsDocumentation: false,
+  codeInterpreter: false,
   selectedModel: null,
 };
 
@@ -35,6 +37,7 @@ type Store = {
   setImageGeneration: (chatId: string, imageGeneration: boolean) => void;
   setWebSearch: (chatId: string, webSearch: boolean) => void;
   setAwsDocumentation: (chatId: string, awsDocumentation: boolean) => void;
+  setCodeInterpreter: (chatId: string, codeInterpreter: boolean) => void;
   setSelectedModel: (chatId: string, model: Model) => void;
 };
 
@@ -78,6 +81,12 @@ const useChatStore = create<Store>()(
             s.chats[chatId] ?? (s.chats[chatId] = { ...DEFAULT_CHAT_STATE });
           curr.awsDocumentation = awsDocumentation;
         }),
+      setCodeInterpreter: (chatId: string, codeInterpreter: boolean) =>
+        set((s) => {
+          const curr =
+            s.chats[chatId] ?? (s.chats[chatId] = { ...DEFAULT_CHAT_STATE });
+          curr.codeInterpreter = codeInterpreter;
+        }),
       setSelectedModel: (chatId: string, model: Model) =>
         set((s) => {
           const curr =
@@ -114,6 +123,7 @@ const useChatState = (chatId: string) => {
   const setImageGenerationImpl = useChatStore((s) => s.setImageGeneration);
   const setWebSearchImpl = useChatStore((s) => s.setWebSearch);
   const setAwsDocumentImpl = useChatStore((s) => s.setAwsDocumentation);
+  const setCodeInterpreterImpl = useChatStore((s) => s.setCodeInterpreter);
   const setSelectedModelImpl = useChatStore((s) => s.setSelectedModel);
 
   // Get available models from parameter (always available with Suspense)
@@ -167,6 +177,9 @@ const useChatState = (chatId: string) => {
     awsDocumentation: state.awsDocumentation,
     setAwsDocumentation: (awsDocumentation: boolean) =>
       setAwsDocumentImpl(chatId, awsDocumentation),
+    codeInterpreter: state.codeInterpreter,
+    setCodeInterpreter: (codeInterpreter: boolean) =>
+      setCodeInterpreterImpl(chatId, codeInterpreter),
     selectedModel: selectedModel!,
     setSelectedModel: (model: Model) => setSelectedModelImpl(chatId, model),
     availableModels,

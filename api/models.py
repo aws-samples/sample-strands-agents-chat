@@ -51,3 +51,4 @@ class StreamingRequest(BaseModel):
     imageGeneration: bool
     webSearch: bool
     awsDocumentation: bool
+    codeInterpreter: bool

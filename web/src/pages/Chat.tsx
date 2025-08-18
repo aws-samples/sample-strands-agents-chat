@@ -34,6 +34,7 @@ type ChatState = {
   imageGeneration?: boolean;
   webSearch?: boolean;
   awsDocumentation?: boolean;
+  codeInterpreter?: boolean;
 };
 
 function Chat() {
@@ -73,6 +74,8 @@ function Chat() {
     setWebSearch,
     awsDocumentation,
     setAwsDocumentation,
+    codeInterpreter,
+    setCodeInterpreter,
     selectedModel,
     setSelectedModel,
     availableModels,
@@ -101,13 +104,15 @@ function Chat() {
           !!state.reasoning,
           !!state.imageGeneration,
           !!state.webSearch,
-          !!state.awsDocumentation
+          !!state.awsDocumentation,
+          !!state.codeInterpreter
         );
         setSelectedModel(state.model!);
         setReasoning(!!state.reasoning);
         setImageGeneration(!!state.imageGeneration);
         setWebSearch(!!state.webSearch);
         setAwsDocumentation(!!state.awsDocumentation);
+        setCodeInterpreter(!!state.codeInterpreter);
         navigate('.', { replace: true, state: undefined });
       } else {
         setMessages([]);
@@ -131,6 +136,7 @@ function Chat() {
       setImageGeneration(false);
       setWebSearch(false);
       setAwsDocumentation(false);
+      setCodeInterpreter(false);
     }
   };
 
@@ -173,7 +179,8 @@ function Chat() {
     reasoning: boolean,
     imageGeneration: boolean,
     webSearch: boolean,
-    awsDocumentation: boolean
+    awsDocumentation: boolean,
+    codeInterpreter: boolean
   ) => {
     setStreaming(true);
 
@@ -212,7 +219,8 @@ function Chat() {
         reasoning,
         imageGeneration,
         webSearch,
-        awsDocumentation
+        awsDocumentation,
+        codeInterpreter
       );
 
       for await (const chunk of stream) {
@@ -247,6 +255,7 @@ function Chat() {
           imageGeneration,
           webSearch,
           awsDocumentation,
+          codeInterpreter,
         } as ChatState,
       });
     } else {
@@ -257,7 +266,8 @@ function Chat() {
         reasoning,
         imageGeneration,
         webSearch,
-        awsDocumentation
+        awsDocumentation,
+        codeInterpreter
       );
     }
 
@@ -518,6 +528,25 @@ function Chat() {
                     </button>
                   </Tooltip>
                 )}
+
+                <Tooltip content="Code Interpreter">
+                  <button
+                    className={`cursor-pointer rounded p-2 transition-colors duration-300 focus:outline-none ${codeInterpreter ? 'bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 dark:active:bg-blue-800' : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700 dark:active:bg-gray-600'}`}
+                    onClick={() => setCodeInterpreter(!codeInterpreter)}>
+                    <svg
+                      className="h-5 w-5 transition-colors duration-300"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </button>
+                </Tooltip>
               </div>
 
               {/* Mobile: Tools button */}
@@ -526,6 +555,7 @@ function Chat() {
                   reasoning ||
                   imageGeneration ||
                   awsDocumentation ||
+                  codeInterpreter ||
                   (parameter.webSearch && webSearch)
                     ? 'bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 dark:active:bg-blue-800'
                     : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700 dark:active:bg-gray-600'
@@ -615,6 +645,8 @@ function Chat() {
         webSearch={webSearch}
         onWebSearchChange={setWebSearch}
         showWebSearch={parameter.webSearch}
+        codeInterpreter={codeInterpreter}
+        onCodeInterpreterChange={setCodeInterpreter}
       />
     </div>
   );
