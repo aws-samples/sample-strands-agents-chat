@@ -48,4 +48,10 @@ export const parameter: Parameter = {
 
   // AgentCore configuration
   agentCoreRegion: 'us-east-1',
+
+  // Provisioned concurrency configuration for Lambda function
+  // Set the number of concurrent executions to keep warm (0-1000)
+  // Default: 10 concurrent executions to minimize cold start latency
+  // Set to 0 to disable provisioned concurrency
+  provisionedConcurrency: 10,
 };

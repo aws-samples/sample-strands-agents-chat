@@ -1,15 +1,16 @@
 import 'dotenv/config';
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { PythonFunction } from '@aws-cdk/aws-lambda-python-alpha';
 import {
   Runtime,
-  SnapStartConf,
-  LayerVersion,
   FunctionUrlAuthType,
   InvokeMode,
   Code,
   LambdaInsightsVersion,
+  Alias,
+  DockerImageFunction,
+  DockerImageCode,
+  Architecture,
 } from 'aws-cdk-lib/aws-lambda';
 import { PolicyStatement, Effect } from 'aws-cdk-lib/aws-iam';
 import {
@@ -61,6 +62,15 @@ export interface StrandsChatStackProps extends cdk.StackProps {
 export class StrandsChatStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: StrandsChatStackProps) {
     super(scope, id, props);
+
+    // Validate provisioned concurrency parameter
+    // TODO: change to zod validation
+    const concurrency = props.parameter.provisionedConcurrency;
+    if (concurrency < 0 || concurrency > 1000) {
+      throw new Error(
+        `Provisioned concurrency must be between 0 and 1000, got: ${concurrency}`
+      );
+    }
 
     const userPool = new UserPool(this, 'UserPool', {
       selfSignUpEnabled: true,
@@ -156,21 +166,15 @@ export class StrandsChatStack extends cdk.Stack {
         ).unsafeUnwrap()
       : null;
 
-    const handler = new PythonFunction(this, 'AppHandler', {
-      entry: '../api',
-      index: 'main.py',
-      runtime: Runtime.PYTHON_3_13,
+    const handler = new DockerImageFunction(this, 'ApiHandler', {
+      code: DockerImageCode.fromImageAsset('../api'),
       memorySize: 1024,
       timeout: cdk.Duration.minutes(15),
-      snapStart: SnapStartConf.ON_PUBLISHED_VERSIONS,
-      ephemeralStorageSize: cdk.Size.mebibytes(512),
-      bundling: {
-        assetExcludes: ['.venv', '.ruff_cache', '**/__pycache__'],
-      },
+      ephemeralStorageSize: cdk.Size.mebibytes(1024),
+      architecture: Architecture.X86_64,
       environment: {
         AWS_LWA_INVOKE_MODE: 'RESPONSE_STREAM',
         AWS_LWA_READINESS_CHECK_PATH: '/api/',
-        AWS_LAMBDA_EXEC_WRAPPER: '/opt/bootstrap',
         PORT: '8080',
         BUCKET: fileBucket.bucketName,
         TABLE: table.tableName,
@@ -179,23 +183,8 @@ export class StrandsChatStack extends cdk.Stack {
         PARAMETER: JSON.stringify(props.parameter),
         TAVILY_API_KEY: tavilyApiKey ?? '',
       },
-      layers: [
-        LayerVersion.fromLayerVersionArn(
-          this,
-          'LwaLayer',
-          // https://github.com/awslabs/aws-lambda-web-adapter?tab=readme-ov-file#lambda-functions-packaged-as-zip-package-for-aws-managed-runtimes
-          `arn:aws:lambda:${
-            cdk.Stack.of(this).region
-          }:753240598075:layer:LambdaAdapterLayerX86:25`
-        ),
-      ],
       insightsVersion: LambdaInsightsVersion.VERSION_1_0_333_0,
     });
-
-    (handler.node.defaultChild as cdk.CfnResource).addPropertyOverride(
-      'Handler',
-      'run.sh'
-    );
 
     handler.role?.addToPrincipalPolicy(
       new PolicyStatement({
@@ -220,7 +209,13 @@ export class StrandsChatStack extends cdk.Stack {
 
     table.grantReadWriteData(handler);
 
-    const apiFunctionUrl = handler.addFunctionUrl({
+    const lambdaAlias = new Alias(this, 'Alias', {
+      aliasName: 'live',
+      version: handler.currentVersion,
+      provisionedConcurrentExecutions: props.parameter.provisionedConcurrency,
+    });
+
+    const apiFunctionUrl = lambdaAlias.addFunctionUrl({
       authType: FunctionUrlAuthType.AWS_IAM,
       invokeMode: InvokeMode.RESPONSE_STREAM,
     });
