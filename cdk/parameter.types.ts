@@ -11,4 +11,5 @@ export interface Parameter {
   novaCanvasRegion: string;
   createTitleModel: Omit<Model, 'displayName'>;
   agentCoreRegion: string;
+  provisionedConcurrency: number;
 }

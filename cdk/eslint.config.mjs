@@ -3,7 +3,6 @@ import tsEslint from 'typescript-eslint';
 import cdkPlugin from 'eslint-cdk-plugin';
 
 export default tsEslint.config(
-  // ESLintの推奨設定を適用
   eslint.configs.recommended,
   ...tsEslint.configs.recommended,
   {
