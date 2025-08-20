@@ -1,13 +1,25 @@
 <div align="center">
 
-# 🤖 Strands Agents Chat
+# 🤖 Strands Agents Chat Base
 
-*A full-stack AI chat application powered by Amazon Bedrock, Strands Agents, and Bedrock AgentCore*
+<p align="center">
+  <img src="https://img.shields.io/badge/AI%20Powered-Bedrock%20AgentCore-blueviolet?style=for-the-badge&logo=amazon-aws" alt="AI Powered" />
+  <img src="https://img.shields.io/badge/Status-Production%20Ready-success?style=for-the-badge" alt="Status" />
+  <img src="https://img.shields.io/badge/License-MIT--0-blue?style=for-the-badge" alt="License" />
+</p>
+
+*A cutting-edge, full-stack AI chat application powered by Amazon Bedrock, Strands Agents, and Bedrock AgentCore*
+
+<p align="center">
+  <strong>🚀 Serverless • 🎯 Scalable • 🔒 Secure • 🎨 Beautiful</strong>
+</p>
 
 [![AWS](https://img.shields.io/badge/AWS-FF9900?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
-[![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org/)
-[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![Python](https://img.shields.io/badge/Python_3.13-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org/)
+[![React](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://typescriptlang.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
 </div>
 
@@ -46,14 +58,19 @@ This is a sample application that serves as a base implementation for chat appli
 
 ## 🛠️ Built-in Tools
 
+<div align="center">
+
 | Tool | Description | Technology |
 |------|-------------|------------|
 | 💬 **Multi-modal Chat** | Support for images, videos, and documents | Amazon Bedrock |
 | 🧠 **Deep Reasoning** | Advanced AI reasoning for complex problem solving | Amazon Bedrock |
 | 🎨 **Image Generation** | AI-powered image creation | Nova Canvas MCP |
-| 📚 **AWS Documentation Search** | Search and access AWS documentation | AWS Documentation MCP |
+| � **AWS Doceumentation Search** | Search and access AWS documentation | AWS Documentation MCP |
 | 🔍 **Web Search** | Real-time web search capabilities | Tavily API |
-| 💻 **CodeInterpreter** | Execute and analyze code in real-time | Bedrock AgentCore |
+| 🌐 **Web Browser** | Browse and analyze web pages in real-time | Bedrock AgentCore |
+| 💻 **CodeInterpreter** | Execute and analyze code with advanced capabilities | Bedrock AgentCore |
+
+</div>
 
 ---
 
