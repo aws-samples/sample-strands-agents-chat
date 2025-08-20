@@ -65,6 +65,7 @@ async def process_streaming_request(request: StreamingRequest, x_user_sub: str, 
             model_params = {
                 "model_id": request.modelId,
                 "boto_session": session,
+                "max_tokens": 4096,
                 "boto_client_config": Config(
                     retries={
                         "max_attempts": 10,
@@ -79,7 +80,7 @@ async def process_streaming_request(request: StreamingRequest, x_user_sub: str, 
                 model_params["additional_request_fields"] = {
                     "thinking": {
                         "type": "enabled",
-                        "budget_tokens": 4096,
+                        "budget_tokens": 1024,
                     },
                 }
 
