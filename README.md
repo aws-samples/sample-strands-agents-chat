@@ -16,8 +16,11 @@
 ## 📸 Screenshots
 
 <div align="center">
-  <img src="img/screenshot01.png" alt="Chat Interface" width="45%" style="margin-right: 2%;" />
-  <img src="img/screenshot02.png" alt="Mobile View" width="45%" style="margin-left: 2%;" />
+  <img src="img/screenshot01.png" alt="Chat Interface" width="45%" style="margin-right: 2%; margin-bottom: 10px;" />
+  <img src="img/screenshot02.png" alt="Mobile View" width="45%" style="margin-left: 2%; margin-bottom: 10px;" />
+  <br />
+  <img src="img/screenshot03.png" alt="Feature View" width="45%" style="margin-right: 2%;" />
+  <img src="img/screenshot04.png" alt="Settings View" width="45%" style="margin-left: 2%;" />
 </div>
 
 ---
