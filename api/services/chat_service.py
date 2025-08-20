@@ -93,6 +93,7 @@ Below is the conversation history (JSON):
 Please generate the title in the same language as the language the user is using.
 Output only the title. Never output anything other than the title, such as "Here is the generated title" or "The above is the title."
 Do not provide explanations for the output title.
+Do not enclose the title in double quotes.
 Now please output the title.""")
 
         title = res.message["content"][0]["text"]

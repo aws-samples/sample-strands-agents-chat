@@ -9,6 +9,7 @@ from strands import Agent
 from strands.models import BedrockModel
 from strands.tools.mcp import MCPClient
 from strands_tools import calculator, current_time
+from strands_tools.browser import AgentCoreBrowser
 from strands_tools.code_interpreter import AgentCoreCodeInterpreter
 
 from config import PARAMETER, WORKSPACE_DIR
@@ -139,6 +140,10 @@ async def process_streaming_request(request: StreamingRequest, x_user_sub: str, 
             if request.codeInterpreter:
                 agent_core_code_interpreter = AgentCoreCodeInterpreter(region=PARAMETER["agentCoreRegion"])
                 tools.append(agent_core_code_interpreter.code_interpreter)
+
+            if request.webBrowser:
+                agent_core_browser = AgentCoreBrowser(region=PARAMETER["agentCoreRegion"])
+                tools.append(agent_core_browser.browser)
 
             agent = Agent(
                 system_prompt=session_system_prompt,

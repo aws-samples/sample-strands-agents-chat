@@ -15,6 +15,7 @@ export type ChatState = {
   webSearch: boolean;
   awsDocumentation: boolean;
   codeInterpreter: boolean;
+  webBrowser: boolean;
   selectedModel: Model | null;
 };
 
@@ -26,6 +27,7 @@ const DEFAULT_CHAT_STATE: ChatState = {
   webSearch: false,
   awsDocumentation: false,
   codeInterpreter: false,
+  webBrowser: false,
   selectedModel: null,
 };
 
@@ -38,6 +40,7 @@ type Store = {
   setWebSearch: (chatId: string, webSearch: boolean) => void;
   setAwsDocumentation: (chatId: string, awsDocumentation: boolean) => void;
   setCodeInterpreter: (chatId: string, codeInterpreter: boolean) => void;
+  setWebBrowser: (chatId: string, webBrowser: boolean) => void;
   setSelectedModel: (chatId: string, model: Model) => void;
 };
 
@@ -87,6 +90,12 @@ const useChatStore = create<Store>()(
             s.chats[chatId] ?? (s.chats[chatId] = { ...DEFAULT_CHAT_STATE });
           curr.codeInterpreter = codeInterpreter;
         }),
+      setWebBrowser: (chatId: string, webBrowser: boolean) =>
+        set((s) => {
+          const curr =
+            s.chats[chatId] ?? (s.chats[chatId] = { ...DEFAULT_CHAT_STATE });
+          curr.webBrowser = webBrowser;
+        }),
       setSelectedModel: (chatId: string, model: Model) =>
         set((s) => {
           const curr =
@@ -124,6 +133,7 @@ const useChatState = (chatId: string) => {
   const setWebSearchImpl = useChatStore((s) => s.setWebSearch);
   const setAwsDocumentImpl = useChatStore((s) => s.setAwsDocumentation);
   const setCodeInterpreterImpl = useChatStore((s) => s.setCodeInterpreter);
+  const setWebBrowserImpl = useChatStore((s) => s.setWebBrowser);
   const setSelectedModelImpl = useChatStore((s) => s.setSelectedModel);
 
   // Get available models from parameter (always available with Suspense)
@@ -180,6 +190,9 @@ const useChatState = (chatId: string) => {
     codeInterpreter: state.codeInterpreter,
     setCodeInterpreter: (codeInterpreter: boolean) =>
       setCodeInterpreterImpl(chatId, codeInterpreter),
+    webBrowser: state.webBrowser,
+    setWebBrowser: (webBrowser: boolean) =>
+      setWebBrowserImpl(chatId, webBrowser),
     selectedModel: selectedModel!,
     setSelectedModel: (model: Model) => setSelectedModelImpl(chatId, model),
     availableModels,

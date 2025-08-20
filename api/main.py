@@ -1,4 +1,5 @@
 import logging
+import sys
 
 import uvicorn
 from fastapi import FastAPI, Request, Response, status
@@ -8,6 +9,21 @@ from fastapi.responses import JSONResponse
 
 from config import PARAMETER
 from routers import chat, file, streaming
+
+
+def setup_logging():
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] [%(name)s] %(message)s", handlers=[logging.StreamHandler(stream=sys.stdout)])
+
+    logging.getLogger("uvicorn").handlers = []
+    logging.getLogger("uvicorn.access").handlers = []
+    logging.getLogger("uvicorn.error").handlers = []
+    logging.getLogger("uvicorn").propagate = True
+    logging.getLogger("uvicorn.access").propagate = True
+    logging.getLogger("uvicorn.error").propagate = True
+    logging.getLogger("strands").propagate = True
+
+
+setup_logging()
 
 app = FastAPI()
 
@@ -46,10 +62,4 @@ app.include_router(streaming.router)
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-
     uvicorn.run(app, host="0.0.0.0", port=8080)
