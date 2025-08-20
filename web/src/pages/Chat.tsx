@@ -35,6 +35,7 @@ type ChatState = {
   webSearch?: boolean;
   awsDocumentation?: boolean;
   codeInterpreter?: boolean;
+  webBrowser?: boolean;
 };
 
 function Chat() {
@@ -76,6 +77,8 @@ function Chat() {
     setAwsDocumentation,
     codeInterpreter,
     setCodeInterpreter,
+    webBrowser,
+    setWebBrowser,
     selectedModel,
     setSelectedModel,
     availableModels,
@@ -105,7 +108,8 @@ function Chat() {
           !!state.imageGeneration,
           !!state.webSearch,
           !!state.awsDocumentation,
-          !!state.codeInterpreter
+          !!state.codeInterpreter,
+          !!state.webBrowser
         );
         setSelectedModel(state.model!);
         setReasoning(!!state.reasoning);
@@ -113,6 +117,7 @@ function Chat() {
         setWebSearch(!!state.webSearch);
         setAwsDocumentation(!!state.awsDocumentation);
         setCodeInterpreter(!!state.codeInterpreter);
+        setWebBrowser(!!state.webBrowser);
         navigate('.', { replace: true, state: undefined });
       } else {
         setMessages([]);
@@ -137,6 +142,7 @@ function Chat() {
       setWebSearch(false);
       setAwsDocumentation(false);
       setCodeInterpreter(false);
+      setWebBrowser(false);
     }
   };
 
@@ -180,7 +186,8 @@ function Chat() {
     imageGeneration: boolean,
     webSearch: boolean,
     awsDocumentation: boolean,
-    codeInterpreter: boolean
+    codeInterpreter: boolean,
+    webBrowser: boolean
   ) => {
     setStreaming(true);
 
@@ -220,7 +227,8 @@ function Chat() {
         imageGeneration,
         webSearch,
         awsDocumentation,
-        codeInterpreter
+        codeInterpreter,
+        webBrowser
       );
 
       for await (const chunk of stream) {
@@ -256,6 +264,7 @@ function Chat() {
           webSearch,
           awsDocumentation,
           codeInterpreter,
+          webBrowser,
         } as ChatState,
       });
     } else {
@@ -267,7 +276,8 @@ function Chat() {
         imageGeneration,
         webSearch,
         awsDocumentation,
-        codeInterpreter
+        codeInterpreter,
+        webBrowser
       );
     }
 
@@ -521,13 +531,32 @@ function Chat() {
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M2 12h20" />
-                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        />
                       </svg>
                     </button>
                   </Tooltip>
                 )}
+
+                <Tooltip content="Web Browser">
+                  <button
+                    className={`cursor-pointer rounded p-2 transition-colors duration-300 focus:outline-none ${webBrowser ? 'bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 dark:active:bg-blue-800' : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700 dark:active:bg-gray-600'}`}
+                    onClick={() => setWebBrowser(!webBrowser)}>
+                    <svg
+                      className="h-5 w-5 transition-colors duration-300"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M2 12h20" />
+                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                    </svg>
+                  </button>
+                </Tooltip>
 
                 <Tooltip content="Code Interpreter">
                   <button
@@ -556,6 +585,7 @@ function Chat() {
                   imageGeneration ||
                   awsDocumentation ||
                   codeInterpreter ||
+                  webBrowser ||
                   (parameter.webSearch && webSearch)
                     ? 'bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 dark:active:bg-blue-800'
                     : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700 dark:active:bg-gray-600'
@@ -647,6 +677,8 @@ function Chat() {
         showWebSearch={parameter.webSearch}
         codeInterpreter={codeInterpreter}
         onCodeInterpreterChange={setCodeInterpreter}
+        webBrowser={webBrowser}
+        onWebBrowserChange={setWebBrowser}
       />
     </div>
   );

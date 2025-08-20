@@ -52,3 +52,4 @@ class StreamingRequest(BaseModel):
     webSearch: bool
     awsDocumentation: bool
     codeInterpreter: bool
+    webBrowser: bool

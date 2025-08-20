@@ -5,7 +5,7 @@ description = "API server of strands chat"
 requires-python = ">=3.13"
 dependencies = [
   "strands-agents==1.4.0",
-  "strands-agents-tools[agent_core_code_interpreter]==0.2.3",
+  "strands-agents-tools[agent_core_code_interpreter, agent_core_browser]==0.2.3",
   "boto3==1.40.7",
   "mcp==1.12.2",
   "fastapi==0.116.1",

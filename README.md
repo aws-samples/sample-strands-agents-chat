@@ -54,6 +54,7 @@ This is a sample application that serves as a base implementation for chat appli
 | 📚 **AWS Documentation Search** | Search and access AWS documentation | AWS Documentation MCP |
 | 🔍 **Web Search** | Real-time web search capabilities | Tavily API |
 | 💻 **CodeInterpreter** | Execute and analyze code in real-time | Bedrock AgentCore |
+| 🌐 **Web Browser** | Browse web pages and analyze content | Bedrock AgentCore |
 
 ---
 

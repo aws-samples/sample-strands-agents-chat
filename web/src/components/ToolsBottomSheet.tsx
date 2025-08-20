@@ -14,6 +14,8 @@ interface ToolsBottomSheetProps {
   showWebSearch: boolean;
   codeInterpreter: boolean;
   onCodeInterpreterChange: (value: boolean) => void;
+  webBrowser: boolean;
+  onWebBrowserChange: (value: boolean) => void;
 }
 
 function ToolsBottomSheet({
@@ -30,6 +32,8 @@ function ToolsBottomSheet({
   showWebSearch,
   codeInterpreter,
   onCodeInterpreterChange,
+  webBrowser,
+  onWebBrowserChange,
 }: ToolsBottomSheetProps) {
   // Close on escape key
   useEffect(() => {
@@ -130,6 +134,25 @@ function ToolsBottomSheet({
         </svg>
       ),
     },
+
+    {
+      id: 'webBrowser',
+      name: 'Web Browser',
+      description: 'Browse web pages',
+      checked: webBrowser,
+      onChange: onWebBrowserChange,
+      icon: (
+        <svg
+          className="h-5 w-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M2 12h20" />
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+        </svg>
+      ),
+    },
   ];
 
   // Add web search tool if enabled
@@ -146,9 +169,12 @@ function ToolsBottomSheet({
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10" />
-          <path d="M2 12h20" />
-          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          />
         </svg>
       ),
     });

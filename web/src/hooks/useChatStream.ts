@@ -24,7 +24,8 @@ const useChatStream = () => {
     imageGeneration: boolean,
     webSearch: boolean,
     awsDocumentation: boolean,
-    codeInterpreter: boolean
+    codeInterpreter: boolean,
+    webBrowser: boolean
   ) {
     const req = JSON.stringify({
       resourceId,
@@ -36,6 +37,7 @@ const useChatStream = () => {
       webSearch,
       awsDocumentation,
       codeInterpreter,
+      webBrowser,
     });
 
     const res = await httpRequest(`${apiEndpoint}streaming`, 'POST', req);
