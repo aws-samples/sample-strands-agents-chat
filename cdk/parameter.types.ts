@@ -1,15 +1,23 @@
-export interface Model {
-  id: string;
-  region: string;
-  displayName?: string;
-}
+import { z } from 'zod';
 
-export interface Parameter {
-  appRegion: string;
-  models: Model[];
-  tavilyApiKeySecretArn: string | null;
-  novaCanvasRegion: string;
-  createTitleModel: Omit<Model, 'displayName'>;
-  agentCoreRegion: string;
-  provisionedConcurrency: number;
-}
+const ModelSchema = z.object({
+  id: z.string(),
+  region: z.string(),
+  displayName: z.string().optional(),
+});
+
+export const ParameterSchema = z.object({
+  appRegion: z.string(),
+  models: z.array(ModelSchema),
+  tavilyApiKeySecretArn: z.union([z.null(), z.string()]),
+  novaCanvasRegion: z.string(),
+  createTitleModel: ModelSchema.omit({ displayName: true }),
+  agentCoreRegion: z.string(),
+  provisionedConcurrency: z
+    .number()
+    .int('Provisioned concurrency must be an integer')
+    .min(0, 'Provisioned concurrency must be at least 0')
+    .max(1000, 'Provisioned concurrency must not exceed 1000'),
+});
+
+export type Parameter = z.infer<typeof ParameterSchema>;

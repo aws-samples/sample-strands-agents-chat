@@ -53,5 +53,5 @@ export const parameter: Parameter = {
   // Set the number of concurrent executions to keep warm (0-1000)
   // Default: 10 concurrent executions to minimize cold start latency
   // Set to 0 to disable provisioned concurrency
-  provisionedConcurrency: 10,
+  provisionedConcurrency: 5,
 };
