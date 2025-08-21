@@ -10,9 +10,8 @@ import useParameter from '../hooks/useParameter';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import {
-  type MessageShown,
-  type MessageNotInTable,
   type MessageWillBeInTable,
+  type MessageShown,
   type TextContent,
   type FileContent,
   type StreamChunk,
@@ -56,7 +55,7 @@ function Chat() {
     showScrollButton,
   } = useScreen();
 
-  const { createMessages, getMessages } = useChatApi();
+  const { createMessages, getMessages: getMessagesInDb } = useChatApi();
   const { postNewMessage } = useChatStream();
   const { reloadChats } = useChats();
   const { filetype, upload, supportedExtensions } = useFile();
@@ -82,20 +81,20 @@ function Chat() {
     selectedModel,
     setSelectedModel,
     availableModels,
+    messages,
+    setMessages,
+    getMessagesInState,
+    loading,
+    setLoading,
+    streaming,
+    setStreaming,
   } = useChatState(chatId ?? 'NEW');
   const hiddenFileInput = useRef<HTMLInputElement | null>(null);
   const inputAreaRef = useRef<HTMLDivElement | null>(null);
-  const [streaming, setStreaming] = useState(false);
-  const [messages, setMessages] = useState<MessageShown[]>([]);
-  const latestAssistantMessage = useRef<string>('');
-  const [loading, setLoading] = useState(false);
   const [isModelBottomSheetOpen, setIsModelBottomSheetOpen] = useState(false);
   const [isToolsBottomSheetOpen, setIsToolsBottomSheetOpen] = useState(false);
 
   const initialLoad = async () => {
-    setStreaming(false);
-    setLoading(false);
-
     if (chatId) {
       const state = location.state;
 
@@ -120,12 +119,15 @@ function Chat() {
         setWebBrowser(!!state.webBrowser);
         navigate('.', { replace: true, state: undefined });
       } else {
-        setMessages([]);
         setLoading(true);
 
         try {
-          const messages = await getMessages(chatId);
-          setMessages(messages);
+          const messagesInDb = await getMessagesInDb(chatId);
+          const messagesInState = getMessagesInState();
+
+          if (messagesInDb.length >= messagesInState.length) {
+            setMessages(messages);
+          }
         } catch (e) {
           console.error(e);
           navigate('/', { replace: true, state: undefined });
@@ -153,29 +155,28 @@ function Chat() {
   }, [chatId]);
 
   const updateLastAssistantMessage = (chunk: StreamChunk) => {
-    setMessages((prevMessages) => {
-      const currentLastAssistantMessage = prevMessages.slice(
-        prevMessages.length - 1
-      )[0];
-      const updatedTextContent =
-        (currentLastAssistantMessage.content[0] as TextContent).text +
-        chunk.text;
-      const updatedAssistantMessage: MessageNotInTable = {
-        role: 'assistant',
-        content: [
-          {
-            text: updatedTextContent,
-          },
-        ],
-      };
+    // Get the latest messages directly from store
+    const currentMessages = getMessagesInState();
+    const currentLastAssistantMessage = currentMessages.slice(
+      currentMessages.length - 1
+    )[0];
+    const updatedTextContent =
+      (currentLastAssistantMessage.content[0] as TextContent).text + chunk.text;
+    const updatedAssistantMessage: MessageShown = {
+      role: 'assistant',
+      content: [
+        {
+          text: updatedTextContent,
+        },
+      ],
+      resourceId: currentLastAssistantMessage.resourceId!,
+    };
 
-      latestAssistantMessage.current = updatedTextContent;
-
-      return [
-        ...prevMessages.slice(0, prevMessages.length - 1),
-        updatedAssistantMessage,
-      ];
-    });
+    // Use the current messages from store, not the stale hook value
+    setMessages([
+      ...currentMessages.slice(0, currentMessages.length - 1),
+      updatedAssistantMessage,
+    ]);
   };
 
   const executeChatStream = async (
@@ -240,10 +241,16 @@ function Chat() {
       setStreaming(false);
     }
 
-    (newAssistantMessage.content[0] as TextContent).text =
-      latestAssistantMessage.current;
+    // Get the final messages from the current state and use them directly
+    const finalMessages = getMessagesInState();
+    const finalUserMessage = finalMessages[
+      finalMessages.length - 2
+    ] as MessageWillBeInTable;
+    const finalAssistantMessage = finalMessages[
+      finalMessages.length - 1
+    ] as MessageWillBeInTable;
 
-    await createMessages(chatId!, [newUserMessage, newAssistantMessage]);
+    await createMessages(chatId!, [finalUserMessage, finalAssistantMessage]);
 
     reloadChats();
   };
@@ -331,8 +338,6 @@ function Chat() {
         ref={screen}>
         <div ref={scrollTopAnchorRef}></div>
 
-        {loading && <Loading className="py-14" />}
-
         <div ref={messageContainer} className="mt-14">
           {messages.map((m, idx) => {
             return (
@@ -345,6 +350,8 @@ function Chat() {
             );
           })}
         </div>
+
+        {loading && messages.length === 0 && <Loading className="py-14" />}
 
         <div ref={scrollBottomAnchorRef}></div>
       </div>
