@@ -3,7 +3,7 @@ import { immer } from 'zustand/middleware/immer';
 import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 import { useEffect, useCallback } from 'react';
-import { type FileContent } from '@types';
+import { type FileContent, type MessageShown } from '@types';
 import { type Model } from '../types/parameter';
 import useParameter from './useParameter';
 
@@ -17,6 +17,9 @@ export type ChatState = {
   codeInterpreter: boolean;
   webBrowser: boolean;
   selectedModel: Model | null;
+  messages: MessageShown[];
+  loading: boolean;
+  streaming: boolean;
 };
 
 const DEFAULT_CHAT_STATE: ChatState = {
@@ -29,6 +32,9 @@ const DEFAULT_CHAT_STATE: ChatState = {
   codeInterpreter: false,
   webBrowser: false,
   selectedModel: null,
+  messages: [],
+  loading: false,
+  streaming: false,
 };
 
 type Store = {
@@ -42,6 +48,9 @@ type Store = {
   setCodeInterpreter: (chatId: string, codeInterpreter: boolean) => void;
   setWebBrowser: (chatId: string, webBrowser: boolean) => void;
   setSelectedModel: (chatId: string, model: Model) => void;
+  setMessages: (chatId: string, messages: MessageShown[]) => void;
+  setLoading: (chatId: string, loading: boolean) => void;
+  setStreaming: (chatId: string, streaming: boolean) => void;
 };
 
 const useChatStore = create<Store>()(
@@ -102,6 +111,24 @@ const useChatStore = create<Store>()(
             s.chats[chatId] ?? (s.chats[chatId] = { ...DEFAULT_CHAT_STATE });
           curr.selectedModel = model;
         }),
+      setMessages: (chatId: string, messages: MessageShown[]) =>
+        set((s) => {
+          const curr =
+            s.chats[chatId] ?? (s.chats[chatId] = { ...DEFAULT_CHAT_STATE });
+          curr.messages = messages;
+        }),
+      setLoading: (chatId: string, loading: boolean) =>
+        set((s) => {
+          const curr =
+            s.chats[chatId] ?? (s.chats[chatId] = { ...DEFAULT_CHAT_STATE });
+          curr.loading = loading;
+        }),
+      setStreaming: (chatId: string, streaming: boolean) =>
+        set((s) => {
+          const curr =
+            s.chats[chatId] ?? (s.chats[chatId] = { ...DEFAULT_CHAT_STATE });
+          curr.streaming = streaming;
+        }),
     })),
     {
       name: 'chat-state-storage',
@@ -135,6 +162,9 @@ const useChatState = (chatId: string) => {
   const setCodeInterpreterImpl = useChatStore((s) => s.setCodeInterpreter);
   const setWebBrowserImpl = useChatStore((s) => s.setWebBrowser);
   const setSelectedModelImpl = useChatStore((s) => s.setSelectedModel);
+  const setMessagesImpl = useChatStore((s) => s.setMessages);
+  const setLoadingImpl = useChatStore((s) => s.setLoading);
+  const setStreamingImpl = useChatStore((s) => s.setStreaming);
 
   // Get available models from parameter (always available with Suspense)
   const availableModels = parameter.models;
@@ -171,6 +201,11 @@ const useChatState = (chatId: string) => {
     selectedModel = availableModels[0];
   }
 
+  // Add a function to get current messages directly from store
+  const getMessagesInState = useCallback(() => {
+    return useChatStore.getState().chats[chatId]?.messages ?? [];
+  }, [chatId]);
+
   return {
     userInput: state.userInput,
     setUserInput: (userInput: string) => setUserInputImpl(chatId, userInput),
@@ -196,6 +231,14 @@ const useChatState = (chatId: string) => {
     selectedModel: selectedModel!,
     setSelectedModel: (model: Model) => setSelectedModelImpl(chatId, model),
     availableModels,
+    messages: state.messages,
+    setMessages: (messages: MessageShown[]) =>
+      setMessagesImpl(chatId, messages),
+    getMessagesInState,
+    loading: state.loading,
+    setLoading: (loading: boolean) => setLoadingImpl(chatId, loading),
+    streaming: state.streaming,
+    setStreaming: (streaming: boolean) => setStreamingImpl(chatId, streaming),
   };
 };
 
