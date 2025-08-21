@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  lint-and-build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+        cache-dependency-path: |
+          cdk/package-lock.json
+          web/package-lock.json
+          cdk/edge/originRequest/package-lock.json
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        version: "latest"
+
+    - name: Configure git for pre_check.sh
+      run: |
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+
+    - name: Run pre_check.sh
+      run: |
+        ./pre_check.sh
+
+    - name: Verify no changes after linting
+      run: |
+        if ! git diff --quiet || ! git diff --cached --quiet; then
+          echo "Error: Linting tools made changes that were not committed"
+          echo "Changed files:"
+          git diff --name-only
+          git diff --cached --name-only
+          exit 1
+        fi
