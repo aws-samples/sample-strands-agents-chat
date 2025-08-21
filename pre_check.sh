@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Exit on any error
+set -e
+
 # Check if required commands exist
 if ! command -v npm &> /dev/null; then
     echo "Error: npm command not found. Please install Node.js and npm."
@@ -8,6 +11,11 @@ fi
 
 if ! command -v uv &> /dev/null; then
     echo "Error: uv command not found. Please install uv (Python package manager)."
+    exit 1
+fi
+
+if ! command -v git &> /dev/null; then
+    echo "Error: git command not found. Please install git."
     exit 1
 fi
 
@@ -51,3 +59,5 @@ uv run ruff check --fix .
 uv run ruff format .
 
 popd
+
+echo "All checks passed successfully!"
