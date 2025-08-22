@@ -13,8 +13,8 @@ from strands_tools.browser import AgentCoreBrowser
 from strands_tools.code_interpreter import AgentCoreCodeInterpreter
 
 from config import PARAMETER, WORKSPACE_DIR
-from database import get_messages_from_db
-from models import MessageInTable, StreamingRequest
+from database import create_messages_in_db, get_messages_from_db
+from models import MessageInTable, MessageWillBeInTable, StreamingRequest
 from services.chat_service import build_message, build_messages
 from tools import create_session_aware_upload_tool, web_search
 from utils import (
@@ -44,6 +44,9 @@ async def process_streaming_request(request: StreamingRequest, x_user_sub: str, 
         prev_messages_data = get_messages_from_db(request.resourceId)
         prev_messages = [MessageInTable(**x) for x in prev_messages_data]
 
+    # Initialize text accumulation for assistant response
+    accumulated_text = ""
+
     heartbeat_queue = asyncio.Queue()
     stream_finished = asyncio.Event()
 
@@ -57,6 +60,7 @@ async def process_streaming_request(request: StreamingRequest, x_user_sub: str, 
             pass
 
     async def stream_task():
+        nonlocal accumulated_text
         try:
             session = boto3.Session(
                 region_name=request.modelRegion,
@@ -158,31 +162,45 @@ async def process_streaming_request(request: StreamingRequest, x_user_sub: str, 
             async for event in agent.stream_async(build_message(request.userMessage)["content"]):
                 # Text output
                 if "event" in event and "contentBlockDelta" in event["event"] and "delta" in event["event"]["contentBlockDelta"] and "text" in event["event"]["contentBlockDelta"]["delta"]:
-                    await heartbeat_queue.put(stream_chunk(event["event"]["contentBlockDelta"]["delta"]["text"]))
+                    text_chunk = event["event"]["contentBlockDelta"]["delta"]["text"]
+                    accumulated_text += text_chunk
+                    await heartbeat_queue.put(stream_chunk(text_chunk))
 
                 # Reasoning text
                 if "event" in event and "contentBlockDelta" in event["event"] and "delta" in event["event"]["contentBlockDelta"] and "reasoningContent" in event["event"]["contentBlockDelta"]["delta"] and "text" in event["event"]["contentBlockDelta"]["delta"]["reasoningContent"]:
                     if not reasoning_block:
-                        await heartbeat_queue.put(stream_chunk("\n```Thinking\n"))
-                    await heartbeat_queue.put(stream_chunk(event["event"]["contentBlockDelta"]["delta"]["reasoningContent"]["text"]))
+                        reasoning_start = "\n```Thinking\n"
+                        accumulated_text += reasoning_start
+                        await heartbeat_queue.put(stream_chunk(reasoning_start))
+                    reasoning_text = event["event"]["contentBlockDelta"]["delta"]["reasoningContent"]["text"]
+                    accumulated_text += reasoning_text
+                    await heartbeat_queue.put(stream_chunk(reasoning_text))
                     reasoning_block = True
 
                 # Reasoning stop
                 if "event" in event and "contentBlockStop" in event["event"] and reasoning_block:
-                    await heartbeat_queue.put(stream_chunk("\n```\n"))
+                    reasoning_end = "\n```\n"
+                    accumulated_text += reasoning_end
+                    await heartbeat_queue.put(stream_chunk(reasoning_end))
                     reasoning_block = False
 
                 # Start using tool
                 elif "event" in event and "contentBlockStart" in event["event"] and "start" in event["event"]["contentBlockStart"] and "toolUse" in event["event"]["contentBlockStart"]["start"] and "name" in event["event"]["contentBlockStart"]["start"]["toolUse"]:
-                    await heartbeat_queue.put(stream_chunk(f"\n```{event['event']['contentBlockStart']['start']['toolUse']['name']}\n"))
+                    tool_start = f"\n```{event['event']['contentBlockStart']['start']['toolUse']['name']}\n"
+                    accumulated_text += tool_start
+                    await heartbeat_queue.put(stream_chunk(tool_start))
 
                 # During tool use
                 elif "event" in event and "contentBlockDelta" in event["event"] and "delta" in event["event"]["contentBlockDelta"] and "toolUse" in event["event"]["contentBlockDelta"]["delta"] and "input" in event["event"]["contentBlockDelta"]["delta"]["toolUse"]:
-                    await heartbeat_queue.put(stream_chunk(event["event"]["contentBlockDelta"]["delta"]["toolUse"]["input"]))
+                    tool_input = event["event"]["contentBlockDelta"]["delta"]["toolUse"]["input"]
+                    accumulated_text += tool_input
+                    await heartbeat_queue.put(stream_chunk(tool_input))
 
                 # Stop using tool
                 elif "event" in event and "messageStop" in event["event"] and "stopReason" in event["event"]["messageStop"] and event["event"]["messageStop"]["stopReason"] == "tool_use":
-                    await heartbeat_queue.put(stream_chunk("\n```\n"))
+                    tool_end = "\n```\n"
+                    accumulated_text += tool_end
+                    await heartbeat_queue.put(stream_chunk(tool_end))
         except Exception as e:
             logging.error(f"Streaming error: {str(e)}", exc_info=True)
             await heartbeat_queue.put(handle_error_and_stream(e))
@@ -210,6 +228,23 @@ async def process_streaming_request(request: StreamingRequest, x_user_sub: str, 
             await stream_task_handle
         except asyncio.CancelledError:
             pass
+
+        # Save messages to database after streaming completes
+        try:
+            # Build user message from request
+            user_message = MessageWillBeInTable(role=request.userMessage.role, content=request.userMessage.content, resourceId=request.userMessage.resourceId)
+
+            # Build assistant message from accumulated text
+            assistant_message = MessageWillBeInTable(role="assistant", content=[{"text": accumulated_text}] if accumulated_text else [{"text": ""}], resourceId=request.assistantMessage.resourceId)
+
+            # Save both messages to database
+            messages_to_save = [user_message, assistant_message]
+            create_messages_in_db(request.resourceId, x_user_sub, messages_to_save)
+            logging.info(f"Successfully saved {len(messages_to_save)} messages for chat {request.resourceId}")
+
+        except Exception as e:
+            # Log error but don't interrupt streaming response
+            logging.error(f"Failed to save messages for chat {request.resourceId}: {str(e)}", exc_info=True)
 
         # Clean up session workspace
         try:

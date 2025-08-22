@@ -46,7 +46,8 @@ class StreamingRequest(BaseModel):
     resourceId: str
     modelId: str
     modelRegion: str
-    userMessage: MessageNotInTable
+    userMessage: MessageWillBeInTable
+    assistantMessage: MessageWillBeInTable
     reasoning: bool
     imageGeneration: bool
     webSearch: bool

@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import useChatApi from '../hooks/useChatApi';
 import useChatStream from '../hooks/useChatStream';
-import useChats from '../hooks/useChats';
 import useChatState from '../hooks/useChatState';
 import useFile from '../hooks/useFile';
 import useUser from '../hooks/useUser';
@@ -55,9 +54,9 @@ function Chat() {
     showScrollButton,
   } = useScreen();
 
-  const { createMessages, getMessages: getMessagesInDb } = useChatApi();
+  const { getMessages: getMessagesInDb } = useChatApi();
   const { postNewMessage } = useChatStream();
-  const { reloadChats } = useChats();
+
   const { filetype, upload, supportedExtensions } = useFile();
   const { parameter } = useParameter();
 
@@ -126,7 +125,7 @@ function Chat() {
           const messagesInState = getMessagesInState();
 
           if (messagesInDb.length >= messagesInState.length) {
-            setMessages(messages);
+            setMessages(messagesInDb);
           }
         } catch (e) {
           console.error(e);
@@ -224,6 +223,7 @@ function Chat() {
         model.id,
         model.region,
         newUserMessage,
+        newAssistantMessage,
         reasoning,
         imageGeneration,
         webSearch,
@@ -239,20 +239,44 @@ function Chat() {
       console.error(e);
     } finally {
       setStreaming(false);
+
+      // Synchronize messages with database after streaming completes
+      try {
+        const messagesInDb = await getMessagesInDb(chatId!);
+        const currentMessages = getMessagesInState();
+
+        // Create a map of database messages by resourceId for efficient lookup
+        const dbMessageMap = new Map(
+          messagesInDb.map((msg) => [msg.resourceId, msg])
+        );
+
+        // Replace frontend messages with database versions when matches are found
+        const synchronizedMessages = currentMessages.map((frontendMessage) => {
+          if (
+            frontendMessage.resourceId &&
+            dbMessageMap.has(frontendMessage.resourceId)
+          ) {
+            const dbMessage = dbMessageMap.get(frontendMessage.resourceId)!;
+            // Return database message with all additional fields preserved
+            return {
+              role: dbMessage.role,
+              content: dbMessage.content,
+              resourceId: dbMessage.resourceId,
+              queryId: dbMessage.queryId,
+              orderBy: dbMessage.orderBy,
+              dataType: dbMessage.dataType,
+              userId: dbMessage.userId,
+            } as MessageShown;
+          }
+          return frontendMessage;
+        });
+
+        setMessages(synchronizedMessages);
+      } catch (e) {
+        console.error('Failed to synchronize messages with database:', e);
+        // Continue with current state if synchronization fails
+      }
     }
-
-    // Get the final messages from the current state and use them directly
-    const finalMessages = getMessagesInState();
-    const finalUserMessage = finalMessages[
-      finalMessages.length - 2
-    ] as MessageWillBeInTable;
-    const finalAssistantMessage = finalMessages[
-      finalMessages.length - 1
-    ] as MessageWillBeInTable;
-
-    await createMessages(chatId!, [finalUserMessage, finalAssistantMessage]);
-
-    reloadChats();
   };
 
   const createOrContinueChat = async () => {

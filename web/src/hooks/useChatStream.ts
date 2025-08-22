@@ -1,4 +1,4 @@
-import type { MessageNotInTable, StreamChunk } from '@types';
+import type { MessageWillBeInTable, StreamChunk } from '@types';
 import useApi from './useApi';
 import useConfig from './useConfig';
 import useChats from './useChats';
@@ -21,7 +21,8 @@ const useChatStream = () => {
     resourceId: string,
     modelId: string,
     modelRegion: string,
-    userMessage: MessageNotInTable,
+    userMessage: MessageWillBeInTable,
+    assistantMessage: MessageWillBeInTable,
     reasoning: boolean,
     imageGeneration: boolean,
     webSearch: boolean,
@@ -34,6 +35,7 @@ const useChatStream = () => {
       modelId,
       modelRegion,
       userMessage,
+      assistantMessage,
       reasoning,
       imageGeneration,
       webSearch,
