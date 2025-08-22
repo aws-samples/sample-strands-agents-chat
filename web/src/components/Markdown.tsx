@@ -5,7 +5,6 @@ import useFile from '../hooks/useFile';
 import useCopy from '../hooks/useCopy';
 import useSWR from 'swr';
 import { reinvalidateOnlyOnMount } from '../swr';
-import Loading from './Loading';
 
 // Reduce bundle size by registering only the languages used in the project
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -180,10 +179,7 @@ const CodeRenderer = memo(
         {language || isCodeBlock ? (
           <>
             <div className="flex items-center justify-between p-1 pl-3">
-              <span className="flex flex-auto gap-x-2 text-xs text-white">
-                <div>{language}</div>
-                <Loading size="sm" />
-              </span>
+              <span className="flex-auto text-xs text-white">{language}</span>
               <button
                 className="flex cursor-pointer items-center rounded p-1 text-xs text-gray-300 transition-all duration-200 hover:bg-gray-700 hover:text-white"
                 onClick={() => {

@@ -1,6 +1,7 @@
 import type { MessageNotInTable, StreamChunk } from '@types';
 import useApi from './useApi';
 import useConfig from './useConfig';
+import useChats from './useChats';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -14,6 +15,7 @@ const useChatStream = () => {
   const { httpRequest } = useApi();
   const { config } = useConfig();
   const apiEndpoint = config?.apiEndpoint;
+  const { reloadChats } = useChats();
 
   const postNewMessage = async function* (
     resourceId: string,
@@ -45,8 +47,14 @@ const useChatStream = () => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let error: any = null;
+    let chatsReloaded = false;
 
     for await (const chunk of stream) {
+      if (!chatsReloaded) {
+        reloadChats();
+        chatsReloaded = true;
+      }
+
       const chunkJsonL = chunk.split('\n');
 
       for (const chunkJson of chunkJsonL) {
