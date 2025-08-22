@@ -5,6 +5,7 @@ import useFile from '../hooks/useFile';
 import useCopy from '../hooks/useCopy';
 import useSWR from 'swr';
 import { reinvalidateOnlyOnMount } from '../swr';
+import Loading from './Loading';
 
 // Reduce bundle size by registering only the languages used in the project
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -176,10 +177,13 @@ const CodeRenderer = memo(
 
     return (
       <>
-        {language ? (
+        {language || isCodeBlock ? (
           <>
             <div className="flex items-center justify-between p-1 pl-3">
-              <span className="flex-auto text-xs text-white">{language}</span>
+              <span className="flex flex-auto gap-x-2 text-xs text-white">
+                <div>{language}</div>
+                <Loading size="sm" />
+              </span>
               <button
                 className="flex cursor-pointer items-center rounded p-1 text-xs text-gray-300 transition-all duration-200 hover:bg-gray-700 hover:text-white"
                 onClick={() => {
@@ -207,14 +211,6 @@ const CodeRenderer = memo(
               {codeText}
             </SyntaxHighlighter>
           </>
-        ) : isCodeBlock ? (
-          <code className="block rounded-md text-white">
-            {codeText.split('\n').map((line, index) => (
-              <span key={`line-${index}`} className="block">
-                {line}
-              </span>
-            ))}
-          </code>
         ) : (
           <span className="max-w-full scroll-p-0 overflow-x-auto rounded bg-gray-800 px-1.5 py-0.5 text-sm whitespace-pre text-white dark:bg-gray-900">
             {codeText}
@@ -231,12 +227,20 @@ const CodeRenderer = memo(
   }
 );
 
+const convertThinkingTag = (text: string): string => {
+  return text
+    .replace(/<thinking>/gs, '```Thinking\n')
+    .replace(/<\/thinking>/gs, '\n```');
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const Markdown = memo(({ prefix, children }: any) => {
+  const convertedText = convertThinkingTag(children);
+
   return (
     <div className="prose prose-gray dark:prose-invert max-w-full transition-colors duration-300">
       <ReactMarkdown
-        children={children}
+        children={convertedText}
         remarkPlugins={[remarkBreaks]}
         remarkRehypeOptions={{ clobberPrefix: prefix }}
         components={{
