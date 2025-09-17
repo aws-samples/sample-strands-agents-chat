@@ -12,6 +12,7 @@ class InTable(BaseModel):
 class MessageNotInTable(BaseModel):
     role: str
     content: list[dict[str, str]]
+    tools: list[str] | None = None
 
 
 class MessageInTable(MessageNotInTable, InTable):
@@ -48,9 +49,3 @@ class StreamingRequest(BaseModel):
     modelRegion: str
     userMessage: MessageWillBeInTable
     assistantMessage: MessageWillBeInTable
-    reasoning: bool
-    imageGeneration: bool
-    webSearch: bool
-    awsDocumentation: bool
-    codeInterpreter: bool
-    webBrowser: bool

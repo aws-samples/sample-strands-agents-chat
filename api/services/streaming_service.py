@@ -8,7 +8,7 @@ from mcp import StdioServerParameters, stdio_client
 from strands import Agent
 from strands.models import BedrockModel
 from strands.tools.mcp import MCPClient
-from strands_tools import calculator, current_time
+from strands_tools import calculator, current_time, sleep
 from strands_tools.browser import AgentCoreBrowser
 from strands_tools.code_interpreter import AgentCoreCodeInterpreter
 
@@ -80,7 +80,10 @@ async def process_streaming_request(request: StreamingRequest, x_user_sub: str, 
                 ),
             }
 
-            if request.reasoning:
+            # Extract tools from user message
+            user_tools = request.userMessage.tools or []
+
+            if "reasoning" in user_tools:
                 model_params["additional_request_fields"] = {
                     "thinking": {
                         "type": "enabled",
@@ -95,10 +98,11 @@ async def process_streaming_request(request: StreamingRequest, x_user_sub: str, 
             tools = [
                 current_time,
                 calculator,
+                sleep,
                 session_upload_tool,
             ]
 
-            if request.imageGeneration:
+            if "imageGeneration" in user_tools:
                 image_generation_mcp_client = MCPClient(
                     lambda: stdio_client(
                         StdioServerParameters(
@@ -120,7 +124,7 @@ async def process_streaming_request(request: StreamingRequest, x_user_sub: str, 
                 image_generation_tools = image_generation_mcp_client.list_tools_sync()
                 tools = tools + image_generation_tools
 
-            if request.awsDocumentation:
+            if "awsDocumentation" in user_tools:
                 aws_documentation_mcp_client = MCPClient(
                     lambda: stdio_client(
                         StdioServerParameters(
@@ -139,14 +143,14 @@ async def process_streaming_request(request: StreamingRequest, x_user_sub: str, 
                 aws_documentation_tools = aws_documentation_mcp_client.list_tools_sync()
                 tools = tools + aws_documentation_tools
 
-            if request.webSearch:
+            if "webSearch" in user_tools:
                 tools.append(web_search)
 
-            if request.codeInterpreter:
+            if "codeInterpreter" in user_tools:
                 agent_core_code_interpreter = AgentCoreCodeInterpreter(region=PARAMETER["agentCoreRegion"])
                 tools.append(agent_core_code_interpreter.code_interpreter)
 
-            if request.webBrowser:
+            if "webBrowser" in user_tools:
                 agent_core_browser = AgentCoreBrowser(region=PARAMETER["agentCoreRegion"])
                 tools.append(agent_core_browser.browser)
 
@@ -231,11 +235,11 @@ async def process_streaming_request(request: StreamingRequest, x_user_sub: str, 
 
         # Save messages to database after streaming completes
         try:
-            # Build user message from request
-            user_message = MessageWillBeInTable(role=request.userMessage.role, content=request.userMessage.content, resourceId=request.userMessage.resourceId)
+            # Use tools directly from user message
+            user_message = request.userMessage
 
-            # Build assistant message from accumulated text
-            assistant_message = MessageWillBeInTable(role="assistant", content=[{"text": accumulated_text}] if accumulated_text else [{"text": ""}], resourceId=request.assistantMessage.resourceId)
+            # Build assistant message from accumulated text (assistant messages have tools=None)
+            assistant_message = MessageWillBeInTable(role="assistant", content=[{"text": accumulated_text}] if accumulated_text else [{"text": ""}], resourceId=request.assistantMessage.resourceId, tools=None)
 
             # Save both messages to database
             messages_to_save = [user_message, assistant_message]

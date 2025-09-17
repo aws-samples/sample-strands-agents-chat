@@ -4,6 +4,7 @@ import useCopy from '../hooks/useCopy';
 import { type MessageShown, type TextContent, type FileContent } from '@types';
 import Markdown from './Markdown';
 import Loading from './Loading';
+import ToolIconsList from './ToolIconsList';
 
 function Message(props: { message: MessageShown; loading: boolean }) {
   const { downloadUrl } = useFile();
@@ -37,6 +38,12 @@ function Message(props: { message: MessageShown; loading: boolean }) {
             <Markdown>
               {(props.message.content[0] as TextContent).text}
             </Markdown>
+
+            {isUser &&
+              props.message.tools &&
+              props.message.tools.length > 0 && (
+                <ToolIconsList tools={props.message.tools} />
+              )}
 
             {fileContents && (
               <div className="mt-4 flex flex-col justify-start gap-y-1.5 border-t-1 border-blue-300 pt-2">

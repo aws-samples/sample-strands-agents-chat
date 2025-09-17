@@ -22,13 +22,7 @@ const useChatStream = () => {
     modelId: string,
     modelRegion: string,
     userMessage: MessageWillBeInTable,
-    assistantMessage: MessageWillBeInTable,
-    reasoning: boolean,
-    imageGeneration: boolean,
-    webSearch: boolean,
-    awsDocumentation: boolean,
-    codeInterpreter: boolean,
-    webBrowser: boolean
+    assistantMessage: MessageWillBeInTable
   ) {
     const req = JSON.stringify({
       resourceId,
@@ -36,12 +30,6 @@ const useChatStream = () => {
       modelRegion,
       userMessage,
       assistantMessage,
-      reasoning,
-      imageGeneration,
-      webSearch,
-      awsDocumentation,
-      codeInterpreter,
-      webBrowser,
     });
 
     const res = await httpRequest(`${apiEndpoint}streaming`, 'POST', req);
