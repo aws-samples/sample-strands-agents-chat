@@ -195,6 +195,14 @@ function Chat() {
       scrollToBottom();
     }, 100);
 
+    const toolsUsed = [];
+    if (reasoning) toolsUsed.push('reasoning');
+    if (imageGeneration) toolsUsed.push('imageGeneration');
+    if (awsDocumentation) toolsUsed.push('awsDocumentation');
+    if (webSearch) toolsUsed.push('webSearch');
+    if (webBrowser) toolsUsed.push('webBrowser');
+    if (codeInterpreter) toolsUsed.push('codeInterpreter');
+
     const newUserMessage: MessageWillBeInTable = {
       role: 'user',
       content: [
@@ -204,6 +212,7 @@ function Chat() {
         ...inputFiles,
       ],
       resourceId: uuidv4(),
+      tools: toolsUsed.length > 0 ? toolsUsed : null,
     };
     const newAssistantMessage: MessageWillBeInTable = {
       role: 'assistant',
@@ -223,13 +232,7 @@ function Chat() {
         model.id,
         model.region,
         newUserMessage,
-        newAssistantMessage,
-        reasoning,
-        imageGeneration,
-        webSearch,
-        awsDocumentation,
-        codeInterpreter,
-        webBrowser
+        newAssistantMessage
       );
 
       for await (const chunk of stream) {

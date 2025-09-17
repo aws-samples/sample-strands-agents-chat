@@ -33,6 +33,7 @@ export type Role = 'user' | 'assistant' | 'system';
 export type MessageNotInTable = {
   role: Role;
   content: ContentBlock[];
+  tools?: string[] | null;
 };
 
 export type MessageShown = MessageNotInTable & Partial<InTable>;
