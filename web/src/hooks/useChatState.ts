@@ -10,12 +10,7 @@ import useParameter from './useParameter';
 export type ChatState = {
   userInput: string;
   inputFiles: FileContent[];
-  reasoning: boolean;
-  imageGeneration: boolean;
-  webSearch: boolean;
-  awsDocumentation: boolean;
-  codeInterpreter: boolean;
-  webBrowser: boolean;
+  toolsToUse: string[];
   selectedModel: Model | null;
   messages: MessageShown[];
   loading: boolean;
@@ -25,12 +20,7 @@ export type ChatState = {
 const DEFAULT_CHAT_STATE: ChatState = {
   userInput: '',
   inputFiles: [],
-  reasoning: false,
-  imageGeneration: false,
-  webSearch: false,
-  awsDocumentation: false,
-  codeInterpreter: false,
-  webBrowser: false,
+  toolsToUse: [],
   selectedModel: null,
   messages: [],
   loading: false,
@@ -41,12 +31,7 @@ type Store = {
   chats: Record<string, ChatState>;
   setUserInput: (chatId: string, userInput: string) => void;
   setInputFiles: (chatId: string, inputFiles: FileContent[]) => void;
-  setReasoning: (chatId: string, reasoning: boolean) => void;
-  setImageGeneration: (chatId: string, imageGeneration: boolean) => void;
-  setWebSearch: (chatId: string, webSearch: boolean) => void;
-  setAwsDocumentation: (chatId: string, awsDocumentation: boolean) => void;
-  setCodeInterpreter: (chatId: string, codeInterpreter: boolean) => void;
-  setWebBrowser: (chatId: string, webBrowser: boolean) => void;
+  setToolsToUse: (chatId: string, toolsToUse: string[]) => void;
   setSelectedModel: (chatId: string, model: Model) => void;
   setMessages: (chatId: string, messages: MessageShown[]) => void;
   setLoading: (chatId: string, loading: boolean) => void;
@@ -69,41 +54,11 @@ const useChatStore = create<Store>()(
             s.chats[chatId] ?? (s.chats[chatId] = { ...DEFAULT_CHAT_STATE });
           curr.inputFiles = inputFiles;
         }),
-      setReasoning: (chatId: string, reasoning: boolean) =>
+      setToolsToUse: (chatId: string, toolsToUse: string[]) =>
         set((s) => {
           const curr =
             s.chats[chatId] ?? (s.chats[chatId] = { ...DEFAULT_CHAT_STATE });
-          curr.reasoning = reasoning;
-        }),
-      setImageGeneration: (chatId: string, imageGeneration: boolean) =>
-        set((s) => {
-          const curr =
-            s.chats[chatId] ?? (s.chats[chatId] = { ...DEFAULT_CHAT_STATE });
-          curr.imageGeneration = imageGeneration;
-        }),
-      setWebSearch: (chatId: string, webSearch: boolean) =>
-        set((s) => {
-          const curr =
-            s.chats[chatId] ?? (s.chats[chatId] = { ...DEFAULT_CHAT_STATE });
-          curr.webSearch = webSearch;
-        }),
-      setAwsDocumentation: (chatId: string, awsDocumentation: boolean) =>
-        set((s) => {
-          const curr =
-            s.chats[chatId] ?? (s.chats[chatId] = { ...DEFAULT_CHAT_STATE });
-          curr.awsDocumentation = awsDocumentation;
-        }),
-      setCodeInterpreter: (chatId: string, codeInterpreter: boolean) =>
-        set((s) => {
-          const curr =
-            s.chats[chatId] ?? (s.chats[chatId] = { ...DEFAULT_CHAT_STATE });
-          curr.codeInterpreter = codeInterpreter;
-        }),
-      setWebBrowser: (chatId: string, webBrowser: boolean) =>
-        set((s) => {
-          const curr =
-            s.chats[chatId] ?? (s.chats[chatId] = { ...DEFAULT_CHAT_STATE });
-          curr.webBrowser = webBrowser;
+          curr.toolsToUse = toolsToUse;
         }),
       setSelectedModel: (chatId: string, model: Model) =>
         set((s) => {
@@ -155,12 +110,7 @@ const useChatState = (chatId: string) => {
   const { parameter } = useParameter();
   const setUserInputImpl = useChatStore((s) => s.setUserInput);
   const setInputFilesImpl = useChatStore((s) => s.setInputFiles);
-  const setReasoningImpl = useChatStore((s) => s.setReasoning);
-  const setImageGenerationImpl = useChatStore((s) => s.setImageGeneration);
-  const setWebSearchImpl = useChatStore((s) => s.setWebSearch);
-  const setAwsDocumentImpl = useChatStore((s) => s.setAwsDocumentation);
-  const setCodeInterpreterImpl = useChatStore((s) => s.setCodeInterpreter);
-  const setWebBrowserImpl = useChatStore((s) => s.setWebBrowser);
+  const setToolsToUseImpl = useChatStore((s) => s.setToolsToUse);
   const setSelectedModelImpl = useChatStore((s) => s.setSelectedModel);
   const setMessagesImpl = useChatStore((s) => s.setMessages);
   const setLoadingImpl = useChatStore((s) => s.setLoading);
@@ -201,6 +151,26 @@ const useChatState = (chatId: string) => {
     selectedModel = availableModels[0];
   }
 
+  // Helper functions for tool management
+  const currentTools = state.toolsToUse || [];
+  const hasReasoning = currentTools.includes('reasoning');
+  const hasImageGeneration = currentTools.includes('imageGeneration');
+  const hasWebSearch = currentTools.includes('webSearch');
+  const hasAwsDocumentation = currentTools.includes('awsDocumentation');
+  const hasCodeInterpreter = currentTools.includes('codeInterpreter');
+  const hasWebBrowser = currentTools.includes('webBrowser');
+
+  const toggleTool = useCallback(
+    (toolName: string) => {
+      const currentTools = state.toolsToUse || [];
+      const newTools = currentTools.includes(toolName)
+        ? currentTools.filter((tool) => tool !== toolName)
+        : [...currentTools, toolName];
+      setToolsToUseImpl(chatId, newTools);
+    },
+    [chatId, state.toolsToUse, setToolsToUseImpl]
+  );
+
   // Add a function to get current messages directly from store
   const getMessagesInState = useCallback(() => {
     return useChatStore.getState().chats[chatId]?.messages ?? [];
@@ -212,22 +182,88 @@ const useChatState = (chatId: string) => {
     inputFiles: state.inputFiles,
     setInputFiles: (inputFiles: FileContent[]) =>
       setInputFilesImpl(chatId, inputFiles),
-    reasoning: state.reasoning,
-    setReasoning: (reasoning: boolean) => setReasoningImpl(chatId, reasoning),
-    imageGeneration: state.imageGeneration,
-    setImageGeneration: (imageGeneration: boolean) =>
-      setImageGenerationImpl(chatId, imageGeneration),
-    webSearch: state.webSearch,
-    setWebSearch: (webSearch: boolean) => setWebSearchImpl(chatId, webSearch),
-    awsDocumentation: state.awsDocumentation,
-    setAwsDocumentation: (awsDocumentation: boolean) =>
-      setAwsDocumentImpl(chatId, awsDocumentation),
-    codeInterpreter: state.codeInterpreter,
-    setCodeInterpreter: (codeInterpreter: boolean) =>
-      setCodeInterpreterImpl(chatId, codeInterpreter),
-    webBrowser: state.webBrowser,
-    setWebBrowser: (webBrowser: boolean) =>
-      setWebBrowserImpl(chatId, webBrowser),
+    toolsToUse: state.toolsToUse || [],
+    setToolsToUse: (tools: string[]) => setToolsToUseImpl(chatId, tools),
+    toggleTool,
+    // Helper boolean getters for backward compatibility
+    reasoning: hasReasoning,
+    setReasoning: (enabled: boolean) => {
+      const currentTools = state.toolsToUse || [];
+      const hasThisTool = currentTools.includes('reasoning');
+      if (enabled && !hasThisTool) {
+        setToolsToUseImpl(chatId, [...currentTools, 'reasoning']);
+      } else if (!enabled && hasThisTool) {
+        setToolsToUseImpl(
+          chatId,
+          currentTools.filter((tool) => tool !== 'reasoning')
+        );
+      }
+    },
+    imageGeneration: hasImageGeneration,
+    setImageGeneration: (enabled: boolean) => {
+      const currentTools = state.toolsToUse || [];
+      const hasThisTool = currentTools.includes('imageGeneration');
+      if (enabled && !hasThisTool) {
+        setToolsToUseImpl(chatId, [...currentTools, 'imageGeneration']);
+      } else if (!enabled && hasThisTool) {
+        setToolsToUseImpl(
+          chatId,
+          currentTools.filter((tool) => tool !== 'imageGeneration')
+        );
+      }
+    },
+    webSearch: hasWebSearch,
+    setWebSearch: (enabled: boolean) => {
+      const currentTools = state.toolsToUse || [];
+      const hasThisTool = currentTools.includes('webSearch');
+      if (enabled && !hasThisTool) {
+        setToolsToUseImpl(chatId, [...currentTools, 'webSearch']);
+      } else if (!enabled && hasThisTool) {
+        setToolsToUseImpl(
+          chatId,
+          currentTools.filter((tool) => tool !== 'webSearch')
+        );
+      }
+    },
+    awsDocumentation: hasAwsDocumentation,
+    setAwsDocumentation: (enabled: boolean) => {
+      const currentTools = state.toolsToUse || [];
+      const hasThisTool = currentTools.includes('awsDocumentation');
+      if (enabled && !hasThisTool) {
+        setToolsToUseImpl(chatId, [...currentTools, 'awsDocumentation']);
+      } else if (!enabled && hasThisTool) {
+        setToolsToUseImpl(
+          chatId,
+          currentTools.filter((tool) => tool !== 'awsDocumentation')
+        );
+      }
+    },
+    codeInterpreter: hasCodeInterpreter,
+    setCodeInterpreter: (enabled: boolean) => {
+      const currentTools = state.toolsToUse || [];
+      const hasThisTool = currentTools.includes('codeInterpreter');
+      if (enabled && !hasThisTool) {
+        setToolsToUseImpl(chatId, [...currentTools, 'codeInterpreter']);
+      } else if (!enabled && hasThisTool) {
+        setToolsToUseImpl(
+          chatId,
+          currentTools.filter((tool) => tool !== 'codeInterpreter')
+        );
+      }
+    },
+    webBrowser: hasWebBrowser,
+    setWebBrowser: (enabled: boolean) => {
+      const currentTools = state.toolsToUse || [];
+      const hasThisTool = currentTools.includes('webBrowser');
+      if (enabled && !hasThisTool) {
+        setToolsToUseImpl(chatId, [...currentTools, 'webBrowser']);
+      } else if (!enabled && hasThisTool) {
+        setToolsToUseImpl(
+          chatId,
+          currentTools.filter((tool) => tool !== 'webBrowser')
+        );
+      }
+    },
     selectedModel: selectedModel!,
     setSelectedModel: (model: Model) => setSelectedModelImpl(chatId, model),
     availableModels,

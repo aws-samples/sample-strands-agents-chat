@@ -1,10 +1,9 @@
-import { memo, Suspense, useState } from 'react';
+import { memo, useState } from 'react';
 import { default as ReactMarkdown } from 'react-markdown';
 import remarkBreaks from 'remark-breaks';
 import useFile from '../hooks/useFile';
 import useCopy from '../hooks/useCopy';
 import useSWR from 'swr';
-import { reinvalidateOnlyOnMount } from '../swr';
 
 // Reduce bundle size by registering only the languages used in the project
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -76,53 +75,77 @@ const ParagraphRenderer = (props: any) => {
 const ImageRenderer = memo((props: any) => {
   const { isS3, parseS3Url, downloadUrl } = useFile();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
-  const Img = () => {
-    const fetchDownloadUrl = async () => {
-      if (isS3(props.src)) {
-        const { key } = parseS3Url(props.src);
-        const url = await downloadUrl(key);
-        return url;
-      } else {
-        return props.src;
-      }
-    };
+  const fetchDownloadUrl = async () => {
+    if (isS3(props.src)) {
+      const { key } = parseS3Url(props.src);
+      const url = await downloadUrl(key);
+      return url;
+    } else {
+      return props.src;
+    }
+  };
 
-    const { data: src } = useSWR(
-      props.src,
-      fetchDownloadUrl,
-      reinvalidateOnlyOnMount
-    );
+  const { data: src, isLoading } = useSWR(props.src, fetchDownloadUrl, {
+    suspense: false, // Disable suspense to prevent fallback flickering
+    revalidateIfStale: false,
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    revalidateOnMount: true,
+    dedupingInterval: 300000, // 5 minutes
+  });
 
-    const handleImageClick = () => {
-      setIsModalOpen(true);
-    };
+  const handleImageClick = () => {
+    setIsModalOpen(true);
+  };
 
-    const handleModalClose = () => {
-      setIsModalOpen(false);
-    };
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+  };
 
-    const handleBackdropClick = (e: React.MouseEvent) => {
-      if (e.target === e.currentTarget) {
-        handleModalClose();
-      }
-    };
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      handleModalClose();
+    }
+  };
 
-    const handleDownload = async (e: React.MouseEvent) => {
-      e.stopPropagation();
-      window.open(src, '_blank', 'noopener,noreferrer');
-    };
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    window.open(src, '_blank', 'noopener,noreferrer');
+  };
 
+  const handleImageLoad = () => {
+    setImageLoaded(true);
+  };
+
+  // Don't render anything until we have the src URL
+  if (isLoading || !src) {
     return (
-      <>
-        <div className="my-8 flex justify-start">
-          <div className="group relative inline-block">
-            <img
-              src={src}
-              className="cursor-pointer rounded object-contain"
-              onClick={handleImageClick}
-              alt={props.alt || ''}
-            />
+      <div className="my-8 flex justify-start">
+        <div className="flex h-32 w-48 animate-pulse items-center justify-center rounded bg-gray-200 dark:bg-gray-700">
+          <span className="text-gray-500 dark:text-gray-400">
+            Loading image...
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="my-8 flex justify-start">
+        <div className="group relative inline-block">
+          <img
+            src={src}
+            className={`cursor-pointer rounded object-contain transition-opacity duration-200 ${
+              imageLoaded ? 'opacity-100' : 'opacity-0'
+            }`}
+            onClick={handleImageClick}
+            onLoad={handleImageLoad}
+            alt={props.alt || ''}
+          />
+          {imageLoaded && (
             <div className="absolute right-0 bottom-0 left-0 flex items-end justify-end rounded-b bg-gradient-to-t from-black/60 to-transparent p-3 opacity-100 lg:opacity-0 lg:transition-opacity lg:duration-300 lg:group-hover:opacity-100">
               <button
                 onClick={handleDownload}
@@ -141,28 +164,22 @@ const ImageRenderer = memo((props: any) => {
                 </svg>
               </button>
             </div>
-          </div>
+          )}
         </div>
+      </div>
 
-        {isModalOpen && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4"
-            onClick={handleBackdropClick}>
-            <img
-              src={src}
-              className="max-h-full max-w-full rounded object-contain"
-              alt={props.alt || ''}
-            />
-          </div>
-        )}
-      </>
-    );
-  };
-
-  return (
-    <Suspense fallback={<span>Image loading...</span>}>
-      <Img />
-    </Suspense>
+      {isModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4"
+          onClick={handleBackdropClick}>
+          <img
+            src={src}
+            className="max-h-full max-w-full rounded object-contain"
+            alt={props.alt || ''}
+          />
+        </div>
+      )}
+    </>
   );
 });
 
