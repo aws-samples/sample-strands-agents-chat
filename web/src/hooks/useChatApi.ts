@@ -7,6 +7,7 @@ import {
   type MessageNotInTable,
   type MessageWillBeInTable,
   type Pagination,
+  type ToolSelectionResponse,
 } from '@types';
 
 export const CHATS_PAGE_SIZE = 20;
@@ -112,6 +113,20 @@ const useChatApi = () => {
     }
   };
 
+  const selectTools = async (
+    prompt: string
+  ): Promise<ToolSelectionResponse> => {
+    const res = await httpRequest(
+      `${apiEndpoint}chat/select-tools`,
+      'POST',
+      JSON.stringify({ prompt })
+    );
+    if (!res.ok) {
+      throw new Error(`Failed to select tools: ${res.status}`);
+    }
+    return await res.json();
+  };
+
   return {
     createChat,
     getChats,
@@ -120,6 +135,7 @@ const useChatApi = () => {
     updateMessages,
     getMessages,
     createTitle,
+    selectTools,
   };
 };
 

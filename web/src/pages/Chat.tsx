@@ -6,6 +6,8 @@ import useFile from '../hooks/useFile';
 import useUser from '../hooks/useUser';
 import useScreen from '../hooks/useScreen';
 import useParameter from '../hooks/useParameter';
+import useAutoMode from '../hooks/useAutoMode';
+import useToolSelection from '../hooks/useToolSelection';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -28,12 +30,8 @@ type ChatState = {
   model?: Model;
   userInput?: string;
   inputFiles?: FileContent[];
-  reasoning?: boolean;
-  imageGeneration?: boolean;
-  webSearch?: boolean;
-  awsDocumentation?: boolean;
-  codeInterpreter?: boolean;
-  webBrowser?: boolean;
+  toolsToUse?: string[];
+  isAutoMode?: boolean;
 };
 
 function Chat() {
@@ -59,12 +57,16 @@ function Chat() {
 
   const { filetype, upload, supportedExtensions } = useFile();
   const { parameter } = useParameter();
+  const { isAutoMode, toggleAutoMode } = useAutoMode();
+  const { selectTools, isSelecting } = useToolSelection();
 
   const {
     userInput,
     setUserInput,
     inputFiles,
     setInputFiles,
+    toolsToUse,
+    setToolsToUse,
     reasoning,
     setReasoning,
     imageGeneration,
@@ -98,24 +100,32 @@ function Chat() {
       const state = location.state;
 
       if (state && state.newChat) {
-        executeChatStream(
-          state.model!,
-          state.userInput!,
-          state.inputFiles,
-          !!state.reasoning,
-          !!state.imageGeneration,
-          !!state.webSearch,
-          !!state.awsDocumentation,
-          !!state.codeInterpreter,
-          !!state.webBrowser
-        );
+        // Handle new chat creation with proper tool selection
+        const stateTools = state.toolsToUse || [];
+        const wasAutoMode = (state as ChatState & { isAutoMode?: boolean })
+          ?.isAutoMode;
+
         setSelectedModel(state.model!);
-        setReasoning(!!state.reasoning);
-        setImageGeneration(!!state.imageGeneration);
-        setWebSearch(!!state.webSearch);
-        setAwsDocumentation(!!state.awsDocumentation);
-        setCodeInterpreter(!!state.codeInterpreter);
-        setWebBrowser(!!state.webBrowser);
+
+        if (wasAutoMode) {
+          // For auto mode, use the new function that handles tool selection
+          executeChatStreamWithToolSelection(
+            state.model!,
+            state.userInput!,
+            state.inputFiles || []
+          );
+        } else {
+          // For manual mode, use existing function with predefined tools
+          executeChatStream(
+            state.model!,
+            state.userInput!,
+            state.inputFiles || [],
+            stateTools
+          );
+          // Update component state to reflect the tools from navigation state
+          setToolsToUse(stateTools);
+        }
+
         navigate('.', { replace: true, state: undefined });
       } else {
         setLoading(true);
@@ -138,12 +148,7 @@ function Chat() {
       setMessages([]);
       setUserInput('');
       setInputFiles([]);
-      setReasoning(false);
-      setImageGeneration(false);
-      setWebSearch(false);
-      setAwsDocumentation(false);
-      setCodeInterpreter(false);
-      setWebBrowser(false);
+      setToolsToUse([]);
     }
   };
 
@@ -178,30 +183,45 @@ function Chat() {
     ]);
   };
 
-  const executeChatStream = async (
+  const executeChatStreamWithToolSelection = async (
     model: Model,
     userInput: string,
-    inputFiles: FileContent[],
-    reasoning: boolean,
-    imageGeneration: boolean,
-    webSearch: boolean,
-    awsDocumentation: boolean,
-    codeInterpreter: boolean,
-    webBrowser: boolean
+    inputFiles: FileContent[]
   ) => {
+    // Start loading immediately for smooth UX
     setStreaming(true);
 
     setTimeout(() => {
       scrollToBottom();
     }, 100);
 
-    const toolsUsed = [];
-    if (reasoning) toolsUsed.push('reasoning');
-    if (imageGeneration) toolsUsed.push('imageGeneration');
-    if (awsDocumentation) toolsUsed.push('awsDocumentation');
-    if (webSearch) toolsUsed.push('webSearch');
-    if (webBrowser) toolsUsed.push('webBrowser');
-    if (codeInterpreter) toolsUsed.push('codeInterpreter');
+    // Determine tools to use based on mode
+    let finalToolsToUse: string[] = [];
+
+    if (isAutoMode && userInput.trim()) {
+      try {
+        const toolSelection = await selectTools(userInput.trim());
+        if (toolSelection) {
+          // Apply tool selection directly to tools array
+          if (toolSelection.reasoning) finalToolsToUse.push('reasoning');
+          if (toolSelection.imageGeneration)
+            finalToolsToUse.push('imageGeneration');
+          if (toolSelection.webSearch) finalToolsToUse.push('webSearch');
+          if (toolSelection.awsDocumentation)
+            finalToolsToUse.push('awsDocumentation');
+          if (toolSelection.codeInterpreter)
+            finalToolsToUse.push('codeInterpreter');
+          if (toolSelection.webBrowser) finalToolsToUse.push('webBrowser');
+        }
+      } catch (error) {
+        console.error('Failed to auto-select tools:', error);
+        // Fall back to manual selection on error
+        finalToolsToUse = [...toolsToUse];
+      }
+    } else {
+      // Manual mode: use current state values
+      finalToolsToUse = [...toolsToUse];
+    }
 
     const newUserMessage: MessageWillBeInTable = {
       role: 'user',
@@ -212,7 +232,7 @@ function Chat() {
         ...inputFiles,
       ],
       resourceId: uuidv4(),
-      tools: toolsUsed.length > 0 ? toolsUsed : null,
+      tools: finalToolsToUse.length > 0 ? finalToolsToUse : null,
     };
     const newAssistantMessage: MessageWillBeInTable = {
       role: 'assistant',
@@ -260,7 +280,7 @@ function Chat() {
             dbMessageMap.has(frontendMessage.resourceId)
           ) {
             const dbMessage = dbMessageMap.get(frontendMessage.resourceId)!;
-            // Return database message with all additional fields preserved
+            // Return database message with all additional fields preserved, including tools
             return {
               role: dbMessage.role,
               content: dbMessage.content,
@@ -269,6 +289,101 @@ function Chat() {
               orderBy: dbMessage.orderBy,
               dataType: dbMessage.dataType,
               userId: dbMessage.userId,
+              // Preserve tools from frontend message if not in database
+              tools: dbMessage.tools || frontendMessage.tools,
+            } as MessageShown;
+          }
+          return frontendMessage;
+        });
+
+        setMessages(synchronizedMessages);
+      } catch (e) {
+        console.error('Failed to synchronize messages with database:', e);
+        // Continue with current state if synchronization fails
+      }
+    }
+  };
+
+  const executeChatStream = async (
+    model: Model,
+    userInput: string,
+    inputFiles: FileContent[],
+    toolsToUse: string[]
+  ) => {
+    setStreaming(true);
+
+    setTimeout(() => {
+      scrollToBottom();
+    }, 100);
+
+    const newUserMessage: MessageWillBeInTable = {
+      role: 'user',
+      content: [
+        {
+          text: userInput,
+        },
+        ...inputFiles,
+      ],
+      resourceId: uuidv4(),
+      tools: toolsToUse.length > 0 ? toolsToUse : null,
+    };
+    const newAssistantMessage: MessageWillBeInTable = {
+      role: 'assistant',
+      content: [
+        {
+          text: '',
+        },
+      ],
+      resourceId: uuidv4(),
+    };
+
+    setMessages([...messages, newUserMessage, newAssistantMessage]);
+
+    try {
+      const stream = postNewMessage(
+        chatId!,
+        model.id,
+        model.region,
+        newUserMessage,
+        newAssistantMessage
+      );
+
+      for await (const chunk of stream) {
+        updateLastAssistantMessage(chunk);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setStreaming(false);
+
+      // Synchronize messages with database after streaming completes
+      try {
+        const messagesInDb = await getMessagesInDb(chatId!);
+        const currentMessages = getMessagesInState();
+
+        // Create a map of database messages by resourceId for efficient lookup
+        const dbMessageMap = new Map(
+          messagesInDb.map((msg) => [msg.resourceId, msg])
+        );
+
+        // Replace frontend messages with database versions when matches are found
+        const synchronizedMessages = currentMessages.map((frontendMessage) => {
+          if (
+            frontendMessage.resourceId &&
+            dbMessageMap.has(frontendMessage.resourceId)
+          ) {
+            const dbMessage = dbMessageMap.get(frontendMessage.resourceId)!;
+            // Return database message with all additional fields preserved, including tools
+            return {
+              role: dbMessage.role,
+              content: dbMessage.content,
+              resourceId: dbMessage.resourceId,
+              queryId: dbMessage.queryId,
+              orderBy: dbMessage.orderBy,
+              dataType: dbMessage.dataType,
+              userId: dbMessage.userId,
+              // Preserve tools from frontend message if not in database
+              tools: dbMessage.tools || frontendMessage.tools,
             } as MessageShown;
           }
           return frontendMessage;
@@ -293,26 +408,12 @@ function Chat() {
           model: selectedModel,
           userInput,
           inputFiles,
-          reasoning,
-          imageGeneration,
-          webSearch,
-          awsDocumentation,
-          codeInterpreter,
-          webBrowser,
-        } as ChatState,
+          toolsToUse: isAutoMode ? [] : [...toolsToUse], // Pass empty array for auto mode, will be resolved later
+          isAutoMode,
+        } as ChatState & { isAutoMode?: boolean },
       });
     } else {
-      executeChatStream(
-        selectedModel,
-        userInput,
-        inputFiles,
-        reasoning,
-        imageGeneration,
-        webSearch,
-        awsDocumentation,
-        codeInterpreter,
-        webBrowser
-      );
+      executeChatStreamWithToolSelection(selectedModel, userInput, inputFiles);
     }
 
     setUserInput('');
@@ -471,7 +572,12 @@ function Chat() {
                 onChange={setUserInput}
                 value={userInput}
                 onEnter={() => {
-                  if (loading || streaming || userInput.trim().length === 0)
+                  if (
+                    loading ||
+                    streaming ||
+                    isSelecting ||
+                    userInput.trim().length === 0
+                  )
                     return;
                   createOrContinueChat();
                 }}
@@ -499,8 +605,37 @@ function Chat() {
                 </button>
               </Tooltip>
 
+              {/* AUTO/MANUAL Mode Toggle Switch */}
+              <Tooltip
+                content={
+                  isAutoMode
+                    ? 'Auto Mode (AI selects tools)'
+                    : 'Manual Mode (Select tools manually)'
+                }>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={toggleAutoMode}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none dark:focus:ring-offset-gray-800 ${
+                      isAutoMode
+                        ? 'bg-green-500 hover:bg-green-600'
+                        : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500'
+                    }`}>
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                        isAutoMode ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                  <span
+                    className={`text-xs font-medium transition-colors duration-200 ${isAutoMode ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'}`}>
+                    AUTO
+                  </span>
+                </div>
+              </Tooltip>
+
               {/* Desktop: Individual toggle buttons */}
-              <div className="hidden lg:flex lg:gap-2">
+              <div
+                className={`hidden lg:flex lg:gap-2 ${isAutoMode ? 'pointer-events-none opacity-50' : ''}`}>
                 {/* Reasoning toggle button */}
                 <Tooltip content="Reasoning">
                   <button
@@ -613,37 +748,39 @@ function Chat() {
               </div>
 
               {/* Mobile: Tools button */}
-              <button
-                className={`cursor-pointer rounded p-2 transition-colors duration-300 focus:outline-none lg:hidden ${
-                  reasoning ||
-                  imageGeneration ||
-                  awsDocumentation ||
-                  codeInterpreter ||
-                  webBrowser ||
-                  (parameter.webSearch && webSearch)
-                    ? 'bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 dark:active:bg-blue-800'
-                    : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700 dark:active:bg-gray-600'
-                }`}
-                onClick={() => setIsToolsBottomSheetOpen(true)}>
-                <svg
-                  className="h-5 w-5 transition-colors duration-300"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-              </button>
+              {!isAutoMode && (
+                <button
+                  className={`cursor-pointer rounded p-2 transition-colors duration-300 focus:outline-none lg:hidden ${
+                    reasoning ||
+                    imageGeneration ||
+                    awsDocumentation ||
+                    codeInterpreter ||
+                    webBrowser ||
+                    (parameter.webSearch && webSearch)
+                      ? 'bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 dark:active:bg-blue-800'
+                      : 'text-gray-600 hover:bg-gray-100 active:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700 dark:active:bg-gray-600'
+                  }`}
+                  onClick={() => setIsToolsBottomSheetOpen(true)}>
+                  <svg
+                    className="h-5 w-5 transition-colors duration-300"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                </button>
+              )}
 
               {/* Model selector button - mobile only with gradient border */}
               <button
@@ -658,7 +795,10 @@ function Chat() {
                 className="ml-auto cursor-pointer rounded bg-blue-500 p-2 text-white transition-colors duration-300 hover:bg-blue-600 focus:outline-none active:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-blue-500 dark:bg-blue-600 dark:hover:bg-blue-700 dark:active:bg-blue-800 dark:disabled:hover:bg-blue-600"
                 onClick={createOrContinueChat}
                 disabled={
-                  loading || streaming || userInput.trim().length === 0
+                  loading ||
+                  streaming ||
+                  isSelecting ||
+                  userInput.trim().length === 0
                 }>
                 <svg
                   className="h-5 w-5 transition-colors duration-300"

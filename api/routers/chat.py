@@ -11,8 +11,9 @@ from database import (
     is_chat_mine,
     update_messages_in_db,
 )
-from models import CreateChat, CreateMessages, CreateTitle, UpdateMessages
+from models import CreateChat, CreateMessages, CreateTitle, ToolSelectionRequest, ToolSelectionResponse, UpdateMessages
 from services.chat_service import generate_chat_title
+from services.tool_selection_service import select_tools_for_prompt
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -92,3 +93,15 @@ def create_title(
 
     result = generate_chat_title(resource_id, request.messages)
     return result
+
+
+@router.post("/select-tools")
+def select_tools(
+    request: ToolSelectionRequest,
+    x_user_sub: Annotated[str | None, Header()] = None,
+) -> ToolSelectionResponse:
+    """
+    Analyze user prompt and automatically select appropriate tools
+    """
+    tool_selection = select_tools_for_prompt(request.prompt)
+    return ToolSelectionResponse(**tool_selection)

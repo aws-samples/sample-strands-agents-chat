@@ -49,3 +49,16 @@ class StreamingRequest(BaseModel):
     modelRegion: str
     userMessage: MessageWillBeInTable
     assistantMessage: MessageWillBeInTable
+
+
+class ToolSelectionRequest(BaseModel):
+    prompt: str
+
+
+class ToolSelectionResponse(BaseModel):
+    reasoning: bool
+    imageGeneration: bool
+    webSearch: bool
+    awsDocumentation: bool
+    codeInterpreter: bool
+    webBrowser: bool

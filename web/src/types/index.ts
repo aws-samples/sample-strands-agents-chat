@@ -52,3 +52,16 @@ export type Pagination<T> = {
 export type StreamChunk = {
   text: string;
 };
+
+export type ToolSelectionRequest = {
+  prompt: string;
+};
+
+export type ToolSelectionResponse = {
+  reasoning: boolean;
+  imageGeneration: boolean;
+  webSearch: boolean;
+  awsDocumentation: boolean;
+  codeInterpreter: boolean;
+  webBrowser: boolean;
+};
