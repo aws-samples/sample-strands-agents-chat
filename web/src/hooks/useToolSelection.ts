@@ -27,6 +27,7 @@ const useToolSelection = () => {
         awsDocumentation: false,
         codeInterpreter: false,
         webBrowser: false,
+        weather: false,
       };
     } finally {
       setIsSelecting(false);

@@ -64,4 +64,5 @@ export type ToolSelectionResponse = {
   awsDocumentation: boolean;
   codeInterpreter: boolean;
   webBrowser: boolean;
+  weather: boolean;
 };

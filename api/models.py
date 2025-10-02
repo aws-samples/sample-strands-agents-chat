@@ -62,3 +62,4 @@ class ToolSelectionResponse(BaseModel):
     awsDocumentation: bool
     codeInterpreter: bool
     webBrowser: bool
+    weather: bool

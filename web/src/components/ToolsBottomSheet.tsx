@@ -16,6 +16,8 @@ interface ToolsBottomSheetProps {
   onCodeInterpreterChange: (value: boolean) => void;
   webBrowser: boolean;
   onWebBrowserChange: (value: boolean) => void;
+  weather: boolean;
+  onWeatherChange: (value: boolean) => void;
 }
 
 function ToolsBottomSheet({
@@ -34,6 +36,8 @@ function ToolsBottomSheet({
   onCodeInterpreterChange,
   webBrowser,
   onWebBrowserChange,
+  weather,
+  onWeatherChange,
 }: ToolsBottomSheetProps) {
   // Close on escape key
   useEffect(() => {
@@ -150,6 +154,27 @@ function ToolsBottomSheet({
           <circle cx="12" cy="12" r="10" />
           <path d="M2 12h20" />
           <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+        </svg>
+      ),
+    },
+    {
+      id: 'weather',
+      name: 'Weather',
+      description: 'Get weather information',
+      checked: weather,
+      onChange: onWeatherChange,
+      icon: (
+        <svg
+          className="h-5 w-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"
+          />
         </svg>
       ),
     },

@@ -16,7 +16,7 @@ from config import PARAMETER, WORKSPACE_DIR
 from database import create_messages_in_db, get_messages_from_db
 from models import MessageInTable, MessageWillBeInTable, StreamingRequest
 from services.chat_service import build_message, build_messages
-from tools import create_session_aware_upload_tool, web_search
+from tools import create_session_aware_upload_tool, web_search, get_weather, get_weather_forecast
 from utils import (
     cleanup_session_workspace,
     create_session_workspace,
@@ -100,6 +100,8 @@ async def process_streaming_request(request: StreamingRequest, x_user_sub: str, 
                 calculator,
                 sleep,
                 session_upload_tool,
+                get_weather,
+                get_weather_forecast,
             ]
 
             if "imageGeneration" in user_tools:
@@ -145,6 +147,9 @@ async def process_streaming_request(request: StreamingRequest, x_user_sub: str, 
 
             if "webSearch" in user_tools:
                 tools.append(web_search)
+
+            if "weather" in user_tools:
+                tools.extend([get_weather, get_weather_forecast])
 
             if "codeInterpreter" in user_tools:
                 agent_core_code_interpreter = AgentCoreCodeInterpreter(region=PARAMETER["agentCoreRegion"])
