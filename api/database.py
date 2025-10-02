@@ -152,3 +152,56 @@ def update_chat_title(chat: dict, title: str) -> None:
             ":title": title,
         },
     )
+
+
+def create_gallery_item_in_db(bucket: str, key: str, bucket_region: str, filename: str, x_user_sub: str) -> dict:
+    """Create a gallery item in the database"""
+    import uuid
+
+    timestamp = int(datetime.now().timestamp())
+    resource_id = str(uuid.uuid4())
+
+    item = {
+        "queryId": f"{x_user_sub}$gallery",
+        "orderBy": f"{timestamp}",
+        "resourceId": resource_id,
+        "userId": x_user_sub,
+        "dataType": "gallery",
+        "bucket": bucket,
+        "key": key,
+        "bucketRegion": bucket_region,
+        "filename": filename,
+        "uploadedAt": datetime.now().isoformat(),
+    }
+
+    table = get_dynamodb_table()
+    table.put_item(Item=item)
+
+    return item
+
+
+def get_gallery_items_from_db(x_user_sub: str, exclusive_start_key: str | None = None, limit: int | None = None) -> dict:
+    """Get gallery items for a user, ordered by upload time (newest first)"""
+    query_id = f"{x_user_sub}$gallery"
+
+    query_params = {
+        "KeyConditionExpression": Key("queryId").eq(query_id),
+        "ScanIndexForward": False,  # Newest first
+    }
+
+    if exclusive_start_key is not None:
+        query_params["ExclusiveStartKey"] = json.loads(base64_to_str(exclusive_start_key))
+
+    if limit is not None:
+        query_params["Limit"] = limit
+
+    table = get_dynamodb_table()
+    res = table.query(**query_params)
+
+    items = res["Items"]
+    last_evaluated_key = res["LastEvaluatedKey"] if "LastEvaluatedKey" in res and res["LastEvaluatedKey"] is not None else None
+
+    return {
+        "items": items,
+        "lastEvaluatedKey": str_to_base64(json.dumps(last_evaluated_key, ensure_ascii=False)) if last_evaluated_key is not None else None,
+    }

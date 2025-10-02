@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme';
 import useUser from '../hooks/useUser';
 import useChats from '../hooks/useChats';
+import Tooltip from './Tooltip';
 
 interface DrawerProps {
   isOpen: boolean;
@@ -219,29 +220,52 @@ function Drawer({ isOpen, onClose }: DrawerProps) {
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}>
         <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-200 px-4 py-2 dark:border-gray-700">
-          <Link
-            to="/"
-            className="flex items-center rounded p-1 text-gray-700 transition-colors duration-300 hover:text-gray-900 focus:outline-none active:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100 dark:active:text-gray-200"
-            onClick={handleChatClick}>
-            <svg
-              className="h-6 w-6 transition-colors duration-300"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v8m-4-4h8"
-              />
-            </svg>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Tooltip content="New chat" position="bottom">
+              <Link
+                to="/"
+                className="flex items-center rounded p-1 text-gray-700 transition-colors duration-300 hover:text-gray-900 focus:outline-none active:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100 dark:active:text-gray-200"
+                onClick={handleChatClick}>
+                <svg
+                  className="h-6 w-6 transition-colors duration-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v8m-4-4h8"
+                  />
+                </svg>
+              </Link>
+            </Tooltip>
+            <Tooltip content="Gallery" position="bottom">
+              <Link
+                to="/gallery"
+                className="flex items-center rounded p-1 text-gray-700 transition-colors duration-300 hover:text-gray-900 focus:outline-none active:text-gray-800 dark:text-gray-300 dark:hover:text-gray-100 dark:active:text-gray-200"
+                onClick={handleChatClick}>
+                <svg
+                  className="h-6 w-6 transition-colors duration-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              </Link>
+            </Tooltip>
+          </div>
           <ThemeToggle />
         </div>
 

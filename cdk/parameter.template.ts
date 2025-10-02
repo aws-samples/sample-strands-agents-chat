@@ -13,9 +13,9 @@ export const parameter: Parameter = {
   // Model access must be enabled in the respective regions
   models: [
     {
-      id: 'us.anthropic.claude-sonnet-4-20250514-v1:0',
+      id: 'us.anthropic.claude-sonnet-4-5-20250929-v1:0',
       region: 'us-east-1',
-      displayName: 'Claude Sonnet 4',
+      displayName: 'Claude Sonnet 4.5',
     },
     {
       id: 'us.anthropic.claude-opus-4-1-20250805-v1:0',

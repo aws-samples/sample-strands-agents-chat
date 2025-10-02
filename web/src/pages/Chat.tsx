@@ -472,7 +472,9 @@ function Chat() {
               <div key={idx} className="mb-12">
                 <Message
                   message={m}
-                  loading={streaming && idx === messages.length - 1}
+                  loading={
+                    streaming && idx === messages.length - 1 && !isSelecting
+                  }
                 />
               </div>
             );
@@ -480,6 +482,17 @@ function Chat() {
         </div>
 
         {loading && messages.length === 0 && <Loading className="py-14" />}
+
+        {/* Tool selection loading indicator */}
+        {isSelecting && (
+          <div className="mb-12">
+            <div className="w-full text-gray-900 transition-colors duration-300 dark:text-gray-100">
+              <div className="flex h-8 items-center justify-center">
+                <Loading size="md" />
+              </div>
+            </div>
+          </div>
+        )}
 
         <div ref={scrollBottomAnchorRef}></div>
       </div>
@@ -635,7 +648,7 @@ function Chat() {
 
               {/* Desktop: Individual toggle buttons */}
               <div
-                className={`hidden lg:flex lg:gap-2 ${isAutoMode ? 'pointer-events-none opacity-50' : ''}`}>
+                className={`${isAutoMode ? 'hidden' : 'hidden lg:flex lg:gap-2'}`}>
                 {/* Reasoning toggle button */}
                 <Tooltip content="Reasoning">
                   <button

@@ -62,3 +62,12 @@ class ToolSelectionResponse(BaseModel):
     awsDocumentation: bool
     codeInterpreter: bool
     webBrowser: bool
+
+
+class GalleryItem(BaseModel):
+    bucket: str
+    key: str
+    bucketRegion: str
+    filename: str
+    uploadedAt: str
+    userId: str
