@@ -34,6 +34,12 @@ export const parameter: Parameter = {
   // Set to null if web search is not needed (web search will be unavailable)
   tavilyApiKeySecretArn: null,
 
+  // Configuration for weather functionality using OpenWeatherMap API
+  // Create a Secret with the plain text OpenWeatherMap API Key and specify its ARN here
+  // Set to null if weather functionality is not needed (weather tools will be unavailable)
+  // Get your free API key at: https://openweathermap.org/api
+  openWeatherApiKeySecretArn: null,
+
   // AWS region for Nova Canvas model used for image generation
   // Nova Canvas access must be enabled in the specified region
   novaCanvasRegion: 'ap-northeast-1',

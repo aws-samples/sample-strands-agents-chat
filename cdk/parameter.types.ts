@@ -10,6 +10,7 @@ export const ParameterSchema = z.object({
   appRegion: z.string(),
   models: z.array(ModelSchema),
   tavilyApiKeySecretArn: z.union([z.null(), z.string()]),
+  openWeatherApiKeySecretArn: z.union([z.null(), z.string()]),
   novaCanvasRegion: z.string(),
   createTitleModel: ModelSchema.omit({ displayName: true }),
   agentCoreRegion: z.string(),

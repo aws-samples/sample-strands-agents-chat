@@ -166,6 +166,12 @@ export class StrandsChatStack extends cdk.Stack {
         ).unsafeUnwrap()
       : null;
 
+    const openWeatherApiKey: string | null = props.parameter.openWeatherApiKeySecretArn
+      ? cdk.SecretValue.secretsManager(
+          props.parameter.openWeatherApiKeySecretArn
+        ).unsafeUnwrap()
+      : null;
+
     const handler = new DockerImageFunction(this, 'ApiHandler', {
       code: DockerImageCode.fromImageAsset('../api'),
       memorySize: 1024,
@@ -182,6 +188,7 @@ export class StrandsChatStack extends cdk.Stack {
         DATA_TYPE_INDEX_NAME: dataTypeIndexName,
         PARAMETER: JSON.stringify(props.parameter),
         TAVILY_API_KEY: tavilyApiKey ?? '',
+        OPENWEATHER_API_KEY: openWeatherApiKey ?? '',
       },
       insightsVersion: LambdaInsightsVersion.VERSION_1_0_333_0,
     });
