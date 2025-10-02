@@ -1,13 +1,16 @@
 import { Suspense, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import Drawer from './components/Drawer';
 import Chat from './pages/Chat';
+import Gallery from './pages/Gallery';
 import { useTheme } from './hooks/useTheme';
 import { Toaster } from 'react-hot-toast';
 
 function App() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { theme } = useTheme();
+  const location = useLocation();
 
   const toggleDrawer = () => {
     setIsDrawerOpen(!isDrawerOpen);
@@ -15,6 +18,15 @@ function App() {
 
   const closeDrawer = () => {
     setIsDrawerOpen(false);
+  };
+
+  // Determine which page to render based on the current path
+  const renderCurrentPage = () => {
+    if (location.pathname === '/gallery') {
+      return <Gallery />;
+    } else {
+      return <Chat />;
+    }
   };
 
   return (
@@ -25,7 +37,7 @@ function App() {
         <div className="relative flex flex-1 overflow-hidden">
           <Drawer isOpen={isDrawerOpen} onClose={closeDrawer} />
 
-          <Chat />
+          {renderCurrentPage()}
 
           {isDrawerOpen && (
             <div
