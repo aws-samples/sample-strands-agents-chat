@@ -37,7 +37,7 @@ function Gallery() {
     // Check after initial render and when items change
     const timer = setTimeout(checkAndLoadMore, 100);
     return () => clearTimeout(timer);
-  }, [galleryItems, canLoadMore, isLoading, loadMore]);
+  }, [galleryItems, canLoadMore, isLoading, loadMore, screen]);
 
   useEffect(() => {
     notifyScreen();
