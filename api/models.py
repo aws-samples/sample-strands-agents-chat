@@ -63,3 +63,12 @@ class ToolSelectionResponse(BaseModel):
     codeInterpreter: bool
     webBrowser: bool
     weather: bool
+
+
+class GalleryItem(BaseModel):
+    bucket: str
+    key: str
+    bucketRegion: str
+    filename: str
+    uploadedAt: str
+    userId: str

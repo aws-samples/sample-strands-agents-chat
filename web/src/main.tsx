@@ -20,6 +20,10 @@ const router = createBrowserRouter([
     element: <App />,
   },
   {
+    path: '/gallery',
+    element: <App />,
+  },
+  {
     path: '*',
     element: <NotFound />,
   },

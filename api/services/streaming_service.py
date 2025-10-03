@@ -92,7 +92,7 @@ async def process_streaming_request(request: StreamingRequest, x_user_sub: str, 
                 }
 
             # Create session-aware upload tool
-            session_upload_tool = create_session_aware_upload_tool(session_workspace_dir)
+            session_upload_tool = create_session_aware_upload_tool(session_workspace_dir, x_user_sub)
 
             model = BedrockModel(**model_params)
             tools = [

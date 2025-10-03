@@ -35,12 +35,13 @@ def download_s3_file_on_memory(key: str) -> bytes:
     return dl_obj_binary
 
 
-def upload_file_to_s3(filepath: str, session_workspace_dir: str = None) -> str:
+def upload_file_to_s3(filepath: str, session_workspace_dir: str = None, x_user_sub: str = None) -> str:
     """Upload the file at session workspace and retrieve the s3 path
 
     Args:
         filepath: The path to the uploading file
         session_workspace_dir: Session-specific workspace directory for validation
+        x_user_sub: User subscription ID for gallery tracking
     """
     region = os.environ["AWS_REGION"]
 
@@ -60,4 +61,12 @@ def upload_file_to_s3(filepath: str, session_workspace_dir: str = None) -> str:
 
     s3 = boto3.client("s3")
     s3.upload_file(filepath, BUCKET, key)
-    return f"https://{BUCKET}.s3.{region}.amazonaws.com/{key}"
+    s3_url = f"https://{BUCKET}.s3.{region}.amazonaws.com/{key}"
+
+    # Record in gallery if user_sub is provided
+    if x_user_sub:
+        from database import create_gallery_item_in_db
+
+        create_gallery_item_in_db(BUCKET, key, region, filename, x_user_sub)
+
+    return s3_url

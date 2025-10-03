@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from config import PARAMETER
-from routers import chat, file, streaming
+from routers import chat, file, gallery, streaming
 
 
 def setup_logging():
@@ -58,6 +58,7 @@ async def parameter():
 # Include routers
 app.include_router(chat.router)
 app.include_router(file.router)
+app.include_router(gallery.router)
 app.include_router(streaming.router)
 
 
