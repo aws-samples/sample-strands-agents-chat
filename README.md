@@ -35,6 +35,8 @@ This is a sample application that serves as a base implementation for chat appli
 
 🔧 **Extensible with Strands Agents** - Ready for customization with MCP, A2A, Multi Agents, Bedrock AgentCore, and more
 
+🖼️ **Gallery Mode** - Visual gallery for viewing and managing uploaded images and files
+
 📱 **Responsive Design** - Optimized for both desktop and mobile usage
 
 ---
