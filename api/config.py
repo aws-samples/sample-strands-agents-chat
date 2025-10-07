@@ -6,7 +6,6 @@ BUCKET = os.environ["BUCKET"]
 TABLE = os.environ["TABLE"]
 RESOURCE_INDEX_NAME = os.environ["RESOURCE_INDEX_NAME"]
 PARAMETER = json.loads(os.environ["PARAMETER"])
-TAVILY_API_KEY = os.environ["TAVILY_API_KEY"]
 
 # Constants
 WORKSPACE_DIR = "/tmp/ws"
