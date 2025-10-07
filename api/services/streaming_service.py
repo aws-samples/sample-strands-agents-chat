@@ -11,12 +11,13 @@ from strands.tools.mcp import MCPClient
 from strands_tools import calculator, current_time, sleep
 from strands_tools.browser import AgentCoreBrowser
 from strands_tools.code_interpreter import AgentCoreCodeInterpreter
+from strands_tools.tavily import tavily_crawl, tavily_extract, tavily_map, tavily_search
 
 from config import PARAMETER, WORKSPACE_DIR
 from database import create_messages_in_db, get_messages_from_db
 from models import MessageInTable, MessageWillBeInTable, StreamingRequest
 from services.chat_service import build_message, build_messages
-from tools import create_session_aware_upload_tool, web_search
+from tools import create_session_aware_upload_tool
 from utils import (
     cleanup_session_workspace,
     create_session_workspace,
@@ -144,7 +145,10 @@ async def process_streaming_request(request: StreamingRequest, x_user_sub: str, 
                 tools = tools + aws_documentation_tools
 
             if "webSearch" in user_tools:
-                tools.append(web_search)
+                tools.append(tavily_search)
+                tools.append(tavily_extract)
+                tools.append(tavily_crawl)
+                tools.append(tavily_map)
 
             if "codeInterpreter" in user_tools:
                 agent_core_code_interpreter = AgentCoreCodeInterpreter(region=PARAMETER["agentCoreRegion"])
