@@ -63,15 +63,6 @@ export class StrandsChatStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: StrandsChatStackProps) {
     super(scope, id, props);
 
-    // Validate provisioned concurrency parameter
-    // TODO: change to zod validation
-    const concurrency = props.parameter.provisionedConcurrency;
-    if (concurrency < 0 || concurrency > 1000) {
-      throw new Error(
-        `Provisioned concurrency must be between 0 and 1000, got: ${concurrency}`
-      );
-    }
-
     const userPool = new UserPool(this, 'UserPool', {
       selfSignUpEnabled: true,
       signInAliases: {
