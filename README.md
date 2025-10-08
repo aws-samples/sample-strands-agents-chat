@@ -39,6 +39,8 @@ This is a sample application that serves as a base implementation for chat appli
 
 📱 **Responsive Design** - Optimized for both desktop and mobile usage
 
+> **💡 Perfect Starting Point**: If you want to build a governance-enabled, self-hosted, high-functionality generative AI chat application on AWS, using this application as your base implementation is an excellent starting point.
+
 ---
 
 ## 🏛️ Architecture
@@ -153,35 +155,33 @@ The WAF settings are defined in `cdk/lib/waf-stack.ts`. Customize this file to m
 
 **IP Restriction Example:**
 ```typescript
-// Add IP allowlist in waf-stack.ts
-const ipSet = new wafv2.CfnIPSet(this, 'AllowedIPs', {
-  addresses: ['192.168.1.0/24', '10.0.0.0/8'],
+// Modify IP addresses in waf-stack.ts (line 15)
+const allIpv4 = new wafv2.CfnIPSet(this, 'AllowedIpv4Set', {
+  name: 'StrandsChatIpv4',
+  scope: 'CLOUDFRONT',
   ipAddressVersion: 'IPV4',
-  scope: 'CLOUDFRONT'
+  addresses: ['192.168.1.0/24', '10.0.0.0/8'], // Replace with your allowed IP ranges
 });
 ```
 
 **GEO Restriction Example:**
 ```typescript
-// Add country-based access control in waf-stack.ts
-// Add geoMatchStatement to your WAF rule's statement
-const geoRule = new wafv2.CfnWebACL.RuleProperty({
+// Add country-based rule to the rules array in waf-stack.ts (line 34)
+{
   name: 'GeoRestriction',
   priority: 1,
+  action: { allow: {} },
   statement: {
     geoMatchStatement: {
       countryCodes: ['US', 'JP', 'CA'], // Allow only these countries
     },
   },
-  action: {
-    allow: {},
-  },
   visibilityConfig: {
-    sampledRequestsEnabled: true,
     cloudWatchMetricsEnabled: true,
     metricName: 'GeoRestriction',
+    sampledRequestsEnabled: true,
   },
-});
+},
 ```
 
 > **Country Codes**: Use ISO 3166-1 alpha-2 country codes (e.g., 'US' for United States, 'JP' for Japan)
@@ -196,10 +196,19 @@ If you want to disable the Cognito signup functionality and restrict user regist
 3. Change `selfSignUpEnabled` from `true` to `false`
 
 ```typescript
-// In strands-chat-stack.ts
+// In strands-chat-stack.ts (line 66-78)
 const userPool = new UserPool(this, 'UserPool', {
   selfSignUpEnabled: false, // Change from true to false
-  // ... other configurations
+  signInAliases: {
+    username: false,
+    email: true,
+  },
+  passwordPolicy: {
+    requireUppercase: true,
+    requireSymbols: true,
+    requireDigits: true,
+    minLength: 8,
+  },
 });
 ```
 
@@ -208,10 +217,20 @@ const userPool = new UserPool(this, 'UserPool', {
 2. Add the `hideSignup={true}` option to the `<Authenticator>` component
 
 ```tsx
-// In AuthWithUserPool.tsx
-<Authenticator hideSignup={true}>
-  {/* ... existing content */}
-</Authenticator>
+// In AuthWithUserPool.tsx (line 75)
+<Authenticator
+  hideSignup={true}
+  components={{
+    Header() {
+      return (
+        <div className="my-8 text-center">
+          <h1 className="text-3xl font-bold text-blue-600 transition-colors duration-300 dark:text-blue-400">
+            Strands Chat
+          </h1>
+        </div>
+      );
+    },
+  }}>
 ```
 
 > **Note**: After making these changes, redeploy the CDK stack for backend changes to take effect.
